@@ -1,0 +1,47 @@
+[package]
+name = "plp-mocks"
+version = "0.1.0"
+edition = "2024"
+authors = ["Falldot <fe.offep@gmail.com>"]
+readme = "README.md"
+description = "TODO"
+license = "MIT"
+homepage = "https://github.com/plp-lang/mocks"
+repository = "https://github.com/plp-lang/mocks"
+categories = [
+    "development-tools::testing"
+]
+keywords = [
+    "testing",
+    "mocks",
+]
+
+[lints.rust]
+
+[lints.clippy]
+complexity = { level = "deny", priority = -1 }
+suspicious =  { level = "deny", priority = -1 }
+correctness =  { level = "deny", priority = -1 }
+
+perf =  { level = "warn", priority = -1 }
+cargo =  { level = "warn", priority = -1 }
+style =  { level = "warn", priority = -1 }
+nursery =  { level = "warn", priority = -1 }
+pedantic =  { level = "warn", priority = -1 }
+
+multiple_crate_versions = "allow"
+
+[dependencies]
+thiserror = "2.0.18"
+base64 = "0.22.1"
+hex = "0.4.3"
+clap = { version = "4.6.1", features = ["derive", "env"] }
+serde = { version = "1.0.228" }
+tokio = { version = "1.52.3", features = ["full"] }
+quick-xml = { version = "0.40.1", features = ["serialize"] }
+fake = { version = "5.1.0", features = ["derive"] }
+axum = "0.8.9"
+sqlx = { version = "0.9.0", features = ["runtime-tokio", "sqlite"] }
+
+[dev-dependencies]
+tower = { version = "0.5.3", features = ["util"] }
