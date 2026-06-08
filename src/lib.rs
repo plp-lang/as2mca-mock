@@ -1,6 +1,5 @@
 use axum::{
   Router,
-  extract::{Path, State},
   http::HeaderMap,
   response::IntoResponse,
   routing::{get, post},
@@ -8,7 +7,12 @@ use axum::{
 use fake::{Fake, Faker};
 use sqlx::SqlitePool;
 
-use crate::{api::auth::authbasic, args::Args};
+use crate::{
+  api::{api::api, auth::authbasic},
+  args::Args,
+  models::error::Error,
+  repository::session::Session,
+};
 
 mod api;
 pub mod args;
@@ -19,15 +23,21 @@ mod repository;
 #[derive(Clone)]
 pub struct AppState {
   pub args: Args,
-  pub db: SqlitePool,
+  pub session: Session,
 }
 
-pub fn app(args: Args, db: SqlitePool) -> Router {
-  Router::new()
-    .route("/{war_name}/api", post(api))
-    .route("/{war_name}/authbasic", get(authbasic))
-    .with_state(AppState { args, db })
-    .fallback(not_found)
+/// # Errors
+pub async fn app(args: Args, db: SqlitePool) -> Result<Router, Error> {
+  let session = Session::new(db);
+  session.migrate().await?;
+
+  Ok(
+    Router::new()
+      .route("/{war_name}/api", post(api))
+      .route("/{war_name}/authbasic", get(authbasic))
+      .with_state(AppState { args, session })
+      .fallback(not_found),
+  )
 }
 
 fn error_response() -> impl IntoResponse {
@@ -43,13 +53,5 @@ fn error_response() -> impl IntoResponse {
 }
 
 async fn not_found() -> impl IntoResponse {
-  error_response()
-}
-
-async fn api(State(state): State<AppState>, Path(war_name): Path<String>) -> impl IntoResponse {
-  if *war_name == *state.args.web_app_name {
-    return error_response();
-  }
-
   error_response()
 }

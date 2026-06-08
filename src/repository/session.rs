@@ -6,12 +6,13 @@ use crate::models::{
   error::Error,
 };
 
-pub struct Session<'a> {
-  db: &'a SqlitePool,
+#[derive(Clone)]
+pub struct Session {
+  db: SqlitePool,
 }
 
-impl<'a> Session<'a> {
-  pub const fn new(db: &'a SqlitePool) -> Self {
+impl Session {
+  pub const fn new(db: SqlitePool) -> Self {
     Self { db }
   }
 
@@ -23,11 +24,11 @@ impl<'a> Session<'a> {
           username TEXT NOT NULL,
           password TEXT NOT NULL,
           is_active BOOLEAN DEFAULT FALSE,
-          debug_pipe_name TEXT,
+          debug_pipe_name TEXT
         );
         ",
     )
-    .execute(self.db)
+    .execute(&self.db)
     .await?;
     Ok(())
   }
@@ -44,7 +45,7 @@ impl<'a> Session<'a> {
       .bind(&session_id)
       .bind(username.as_ref()) // Преобразуем Box<str> в &str для sqlx
       .bind(password.as_ref())
-      .execute(self.db)
+      .execute(&self.db)
       .await?;
 
     Ok(CreateSessionRes {
@@ -53,7 +54,6 @@ impl<'a> Session<'a> {
   }
 
   pub async fn init(&self, InitSessionReq { session_id }: &InitSessionReq) -> Result<InitSessionRes, Error> {
-    // Authenticated user not found for session: FA6B6C7981D454D931DA7DC66F6AAA78
     let debig_pipe_name = format!("debug${}", (0b0..9_999_999_999).fake::<u64>());
 
     let result = sqlx::query(
@@ -65,7 +65,7 @@ impl<'a> Session<'a> {
     )
     .bind(session_id)
     .bind(&debig_pipe_name)
-    .execute(self.db)
+    .execute(&self.db)
     .await?;
 
     if result.rows_affected() == 0 {

@@ -18,6 +18,13 @@ pub enum Error {
 
   #[error("Sqlite error: {0}")]
   DatabaseSQLiteError(#[from] sqlx::Error),
+
+  #[error("Authenticated user not found for session")]
+  InvalidUtf8,
+  #[error("Authenticated user not found for session")]
+  FailedToExtractBody,
+  #[error("Authenticated user not found for session: {0}")]
+  XmlDeserializeError(#[from] quick_xml::DeError),
 }
 
 impl IntoResponse for Error {
@@ -31,6 +38,8 @@ impl IntoResponse for Error {
         .into_response(),
       Self::DatabaseSQLiteError(err) => (StatusCode::INTERNAL_SERVER_ERROR, format!("{err}")).into_response(),
       Self::AuthenticatedUserNotFound(_) => todo!(),
+      Self::FailedToExtractBody | Self::InvalidUtf8 => (StatusCode::NOT_ACCEPTABLE, "Invalid request").into_response(),
+      Self::XmlDeserializeError(err) => (StatusCode::BAD_REQUEST, format!("{err}")).into_response(),
     }
   }
 }

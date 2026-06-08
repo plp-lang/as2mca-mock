@@ -11,7 +11,7 @@ async fn main() {
   let host = args.host.clone();
   let port = args.port;
 
-  let app = app(args, db);
+  let app = app(args, db).await.unwrap();
   let listener = tokio::net::TcpListener::bind(format!("{host}:{port}")).await.unwrap();
   axum::serve(listener, app).await.unwrap();
 }

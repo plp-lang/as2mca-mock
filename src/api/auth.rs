@@ -1,13 +1,22 @@
 use std::str::from_utf8;
 
 use axum::{
+  body::Body,
   extract::{FromRequestParts, Path, State},
-  http::{StatusCode, header::AUTHORIZATION, request::Parts},
+  http::{
+    HeaderValue, Response, StatusCode,
+    header::{AUTHORIZATION, SET_COOKIE},
+    request::Parts,
+  },
   response::IntoResponse,
 };
 use base64::{Engine, prelude::BASE64_STANDARD};
+use cookie::Cookie;
 
-use crate::{AppState, error_response, models::error::Error};
+use crate::{
+  AppState, error_response,
+  models::{dto::CreateSessionReq, error::Error},
+};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AuthBasic(pub (String, String));
@@ -43,25 +52,28 @@ where
 pub async fn authbasic(
   State(state): State<AppState>,
   Path(war_name): Path<String>,
-  AuthBasic((_username, _password)): AuthBasic,
-) -> impl IntoResponse {
+  AuthBasic((username, password)): AuthBasic,
+) -> Result<Response<Body>, Error> {
   if *war_name != *state.args.web_app_name {
-    return error_response().into_response();
+    return Ok(error_response().into_response());
   }
 
-  // let Ok(true) = sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM users WHERE username = $1 and password = $2)")
-  //   .bind(username)
-  //   .bind(password)
-  //   .fetch_one(&state.db)
-  //   .await
-  // else {
-  //   return (
-  //     StatusCode::UNAUTHORIZED,
-  //     [(WWW_AUTHENTICATE, r#"Basic realm="2MCA Auth""#)],
-  //     "",
-  //   )
-  //     .into_response();
-  // };
+  let req = CreateSessionReq {
+    username: username.into_boxed_str(),
+    password: password.into_boxed_str(),
+  };
 
-  (StatusCode::OK, "Authenticate Success").into_response()
+  let res = state.session.create(&req).await?;
+
+  let cookie = Cookie::build(("JSESSIONID", res.session_id.as_ref()))
+    .path(format!("/{war_name}"))
+    .http_only(true)
+    .build();
+
+  let mut response = (StatusCode::OK, "Authenticate Success").into_response();
+  response
+    .headers_mut()
+    .append(SET_COOKIE, HeaderValue::from_str(&cookie.to_string()).unwrap());
+
+  Ok(response)
 }
