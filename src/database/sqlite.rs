@@ -10,12 +10,15 @@ pub async fn create_db() -> SqlitePool {
 
   sqlx::query(
     r"
-        CREATE TABLE users (
-            id INTEGER PRIMARY KEY,
-            username TEXT NOT NULL,
-            password TEXT NOT NULL
+        CREATE TABLE sessions (
+          id TEXT PRIMARY KEY,
+          username TEXT NOT NULL,
+          password_hash TEXT NOT NULL,
+          debug_pipe_id TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          initial_at TEXT,
+          expires_at TEXT
         );
-        INSERT INTO users(username, password) VALUES ('test', 'test');
         ",
   )
   .execute(&pool)

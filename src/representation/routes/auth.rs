@@ -14,9 +14,35 @@ use base64::{Engine, prelude::BASE64_STANDARD};
 use cookie::Cookie;
 
 use crate::{
-  AppState, error_response,
-  models::{dto::CreateSessionReq, error::Error},
+  domain::entities::session::AuthData,
+  error::Error,
+  representation::{app::AppState, routes::error_response},
 };
+
+pub async fn authbasic(
+  State(state): State<AppState>,
+  Path(war_name): Path<String>,
+  AuthBasic((username, password)): AuthBasic,
+) -> Result<Response<Body>, Error> {
+  if *war_name != *state.args.web_app_name {
+    return Ok(error_response().into_response());
+  }
+
+  let auth_data = AuthData::new(username, password);
+  let session_id = state.session_service.create(auth_data).await?;
+
+  let cookie = Cookie::build(("JSESSIONID", session_id.as_str()))
+    .path(format!("/{war_name}"))
+    .http_only(true)
+    .build();
+
+  let mut response = (StatusCode::OK, "Authenticate Success").into_response();
+  response
+    .headers_mut()
+    .append(SET_COOKIE, HeaderValue::from_str(&cookie.to_string()).unwrap());
+
+  Ok(response)
+}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AuthBasic(pub (String, String));
@@ -47,33 +73,4 @@ where
       _ => Err(Error::AuthorizationNotFound),
     }
   }
-}
-
-pub async fn authbasic(
-  State(state): State<AppState>,
-  Path(war_name): Path<String>,
-  AuthBasic((username, password)): AuthBasic,
-) -> Result<Response<Body>, Error> {
-  if *war_name != *state.args.web_app_name {
-    return Ok(error_response().into_response());
-  }
-
-  let req = CreateSessionReq {
-    username: username.into_boxed_str(),
-    password: password.into_boxed_str(),
-  };
-
-  let res = state.session.create(&req).await?;
-
-  let cookie = Cookie::build(("JSESSIONID", res.session_id.as_ref()))
-    .path(format!("/{war_name}"))
-    .http_only(true)
-    .build();
-
-  let mut response = (StatusCode::OK, "Authenticate Success").into_response();
-  response
-    .headers_mut()
-    .append(SET_COOKIE, HeaderValue::from_str(&cookie.to_string()).unwrap());
-
-  Ok(response)
 }

@@ -1,7 +1,7 @@
 use axum::{body::Bytes, extract::FromRequest};
 use serde::{Deserialize, de::DeserializeOwned};
 
-use crate::models::error::Error;
+use crate::error::Error;
 
 #[derive(Debug, Deserialize)]
 pub struct Request {

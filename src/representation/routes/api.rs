@@ -6,23 +6,24 @@ use axum::{
 };
 
 use crate::{
-  AppState, error_response,
-  models::{
-    error::Error,
-    request::{Request, Xml},
+  error::Error,
+  representation::{
+    app::AppState,
+    dto::requests::{Request, Xml},
+    routes::error_response,
   },
 };
 
 pub async fn api(
   State(state): State<AppState>,
   Path(war_name): Path<String>,
-  Xml(reqeust): Xml<Request>,
+  Xml(request): Xml<Request>,
 ) -> Result<Response<Body>, Error> {
   if *war_name != *state.args.web_app_name {
     return Ok(error_response().into_response());
   }
 
-  println!("{reqeust:?}");
+  println!("{request:?}");
 
   Ok((StatusCode::OK, "Authenticate Success").into_response())
 }
