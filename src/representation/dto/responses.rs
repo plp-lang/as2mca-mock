@@ -1,25 +1,39 @@
-use fake::faker::lorem::en::Paragraphs;
-use fake::{Dummy, Fake};
 use serde::Serialize;
 
-#[derive(Serialize, Dummy)]
+#[derive(Debug, Serialize)]
 pub struct Response {
-  #[serde(rename = "Error")]
-  pub value: Error,
+  #[serde(rename = "$value")]
+  pub body: ResponseKind,
 }
 
-#[derive(Serialize, Dummy)]
+#[derive(Debug, Serialize)]
+pub enum ResponseKind {
+  Session(Session),
+  Done(Done),
+  Error(Error),
+}
+
+#[derive(Debug, Serialize)]
+pub struct Session {
+  #[serde(rename = "@ID")]
+  pub id: String,
+  #[serde(rename = "@DebugPipeName")]
+  pub debug_pipe_name: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct Done {}
+
+#[derive(Debug, Serialize)]
 pub struct Error {
   #[serde(rename = "@Text")]
-  #[dummy(expr = "Paragraphs(1..5).fake::<Vec<String>>().join(\"\n\")")]
   pub text: String,
   #[serde(rename = "ServerErrorInfo")]
-  pub value: ServerErrorInfo,
+  pub body: ServerErrorInfo,
 }
 
-#[derive(Serialize, Dummy)]
+#[derive(Debug, Serialize)]
 pub struct ServerErrorInfo {
   #[serde(rename = "@Text")]
-  #[dummy(expr = "Paragraphs(10..20).fake::<Vec<String>>().join(\"\n\")")]
   pub text: String,
 }

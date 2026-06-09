@@ -28,7 +28,7 @@ pub enum Error {
   AuthorizationNotBasic,
 
   #[error("Authenticated user not found for session: {0}")]
-  AuthenticatedUserNotFound(Box<str>),
+  AuthenticatedUserNotFound(String),
 
   #[error("{0}")]
   InvalidHeaderValue(#[from] InvalidHeaderValue),
@@ -79,7 +79,7 @@ impl IntoResponse for Error {
       Self::XmlSerializeError(se_error) => {
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), se_error.to_string()).into_response()
       }
-      Self::AuthenticatedUserNotFound(_) => todo!(),
+      Self::AuthenticatedUserNotFound(message) => new_error(StatusCode::NOT_FOUND.to_string(), message).into_response(),
     }
   }
 }
@@ -91,14 +91,14 @@ pub fn new_error(title: String, description: String) -> Result<impl IntoResponse
   headers.insert(CONTENT_TYPE, content_type);
 
   let response = responses::Response {
-    value: responses::Error {
+    body: responses::ResponseKind::Error(responses::Error {
       text: title,
-      value: responses::ServerErrorInfo { text: description },
-    },
+      body: responses::ServerErrorInfo { text: description },
+    }),
   };
 
   let body =
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>".to_owned() + &quick_xml::se::to_string(&response)?;
 
-  Ok((headers, body))
+  Ok((StatusCode::OK, headers, body))
 }

@@ -15,11 +15,11 @@ pub enum RequestKind {
 #[derive(Debug, Deserialize)]
 pub struct SessionInit {
   #[serde(rename = "@AliveActiveSession")]
-  pub alive_active_session: Box<str>,
+  pub alive_active_session: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Disconnect {
   #[serde(rename = "@SessionID")]
-  pub session_id: Box<str>,
+  pub session_id: String,
 }

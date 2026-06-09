@@ -22,9 +22,9 @@ impl SqliteSessionRepository {
 
 #[async_trait]
 impl SessionRepository for SqliteSessionRepository {
-  async fn create(&self, auth_data: &AuthData, session_id: &SessionId) -> Result<(), Error> {
+  async fn create(&self, auth_data: &AuthData) -> Result<(), Error> {
     sqlx::query("INSERT INTO sessions (id, username, password_hash) VALUES ($1, $2, $3)")
-      .bind(session_id.as_str())
+      .bind(auth_data.session_id.as_str())
       .bind(&auth_data.username)
       .bind(auth_data.password())
       .execute(&self.db)
@@ -61,16 +61,5 @@ impl SessionRepository for SqliteSessionRepository {
     .fetch_one(&self.db)
     .await?;
     Ok(is_exists)
-  }
-
-  async fn get_auth_data(&self, session_id: &SessionId) -> Result<Option<AuthData>, Error> {
-    let row: Option<(String, String)> = sqlx::query_as(
-      "SELECT username, password_hash FROM sessions
-      WHERE id = $1 AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)",
-    )
-    .bind(session_id.as_str())
-    .fetch_optional(&self.db)
-    .await?;
-    Ok(row.map(|(username, password)| AuthData::new(username, password)))
   }
 }

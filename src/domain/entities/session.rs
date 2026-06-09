@@ -56,14 +56,19 @@ impl From<String> for DebugPipeId {
 
 #[derive(Clone)]
 pub struct AuthData {
+  pub session_id: SessionId,
   pub username: String,
   password: String,
 }
 
 impl AuthData {
   #[must_use]
-  pub const fn new(username: String, password: String) -> Self {
-    Self { username, password }
+  pub const fn new(session_id: SessionId, username: String, password: String) -> Self {
+    Self {
+      session_id,
+      username,
+      password,
+    }
   }
 
   #[must_use]
@@ -75,6 +80,7 @@ impl AuthData {
 impl fmt::Debug for AuthData {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.debug_struct("AuthData")
+      .field("session_id", &self.session_id)
       .field("username", &self.username)
       .field("password", &"[REDACTED]") // Скрываем пароль
       .finish()
