@@ -1,12 +1,15 @@
 use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
 
-#[allow(clippy::missing_panics_doc)]
-pub async fn create_db() -> SqlitePool {
+use crate::error::Error;
+
+/// # Errors
+///
+/// Ошибка коннекта к базе или ошибка миграции
+pub async fn create_db() -> Result<SqlitePool, Error> {
   let pool = SqlitePoolOptions::new()
     .max_connections(1)
     .connect("sqlite::memory:")
-    .await
-    .unwrap();
+    .await?;
 
   sqlx::query(
     r"
@@ -14,7 +17,7 @@ pub async fn create_db() -> SqlitePool {
           id TEXT PRIMARY KEY,
           username TEXT NOT NULL,
           password_hash TEXT NOT NULL,
-          debug_pipe_id TEXT NOT NULL,
+          debug_pipe_id TEXT,
           created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
           initial_at TEXT,
           expires_at TEXT
@@ -22,8 +25,7 @@ pub async fn create_db() -> SqlitePool {
         ",
   )
   .execute(&pool)
-  .await
-  .unwrap();
+  .await?;
 
-  pool
+  Ok(pool)
 }

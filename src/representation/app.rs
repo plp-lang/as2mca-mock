@@ -33,8 +33,11 @@ impl AppState {
   }
 }
 
+/// # Errors
+///
+/// Возможна ошибка подулючения к базе данных: [`Error::DatabaseSQLiteError`]
 pub async fn app(args: Args) -> Result<Router, Error> {
-  let pool = create_db().await;
+  let pool = create_db().await?;
 
   let router = Router::new()
     .route("/{war_name}/api", post(api))

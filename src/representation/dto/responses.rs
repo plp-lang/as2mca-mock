@@ -11,8 +11,8 @@ pub struct Response {
 #[derive(Serialize, Dummy)]
 pub struct Error {
   #[serde(rename = "@Text")]
-  #[dummy(expr = "Paragraphs(1..5).fake::<Vec<String>>().join(\"\n\").into_boxed_str()")]
-  pub text: Box<str>,
+  #[dummy(expr = "Paragraphs(1..5).fake::<Vec<String>>().join(\"\n\")")]
+  pub text: String,
   #[serde(rename = "ServerErrorInfo")]
   pub value: ServerErrorInfo,
 }
@@ -20,6 +20,6 @@ pub struct Error {
 #[derive(Serialize, Dummy)]
 pub struct ServerErrorInfo {
   #[serde(rename = "@Text")]
-  #[dummy(expr = "Paragraphs(10..20).fake::<Vec<String>>().join(\"\n\").into_boxed_str()")]
-  pub text: Box<str>,
+  #[dummy(expr = "Paragraphs(10..20).fake::<Vec<String>>().join(\"\n\")")]
+  pub text: String,
 }

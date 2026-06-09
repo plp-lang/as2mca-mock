@@ -1,6 +1,6 @@
 use axum::{
   body::Body,
-  extract::{Path, State},
+  extract::State,
   http::{Response, StatusCode},
   response::IntoResponse,
 };
@@ -9,20 +9,17 @@ use crate::{
   error::Error,
   representation::{
     app::AppState,
-    dto::requests::{Request, Xml},
-    routes::error_response,
+    dto::requests::Request,
+    middlewares::{war_path::WarPath, xml::Xml},
   },
 };
 
+/// # Errors
 pub async fn api(
-  State(state): State<AppState>,
-  Path(war_name): Path<String>,
+  State(_state): State<AppState>,
+  WarPath(_war_name): WarPath,
   Xml(request): Xml<Request>,
 ) -> Result<Response<Body>, Error> {
-  if *war_name != *state.args.web_app_name {
-    return Ok(error_response().into_response());
-  }
-
   println!("{request:?}");
 
   Ok((StatusCode::OK, "Authenticate Success").into_response())

@@ -1,45 +1,104 @@
+use std::str::Utf8Error;
+
 use axum::{
   body::Body,
-  http::{Response, StatusCode, header::WWW_AUTHENTICATE},
+  extract::rejection::BytesRejection,
+  http::{
+    HeaderMap, Response, StatusCode,
+    header::{CONTENT_TYPE, InvalidHeaderValue, WWW_AUTHENTICATE},
+  },
   response::IntoResponse,
 };
+
+use crate::representation::dto::responses;
 
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum Error {
+  #[error("Not Found")]
+  PageNotFound,
+
   #[error("`Authorization` header is missing")]
   AuthorizationHeaderIsMissing,
+
   #[error("`Authorization` header contains invalid characters")]
   AuthorizationHeaderInvalidChars,
+
   #[error("`Authorization` header must be for basic authentication")]
-  AuthorizationNotFound,
+  AuthorizationNotBasic,
+
   #[error("Authenticated user not found for session: {0}")]
   AuthenticatedUserNotFound(Box<str>),
 
-  #[error("Sqlite error: {0}")]
+  #[error("{0}")]
+  InvalidHeaderValue(#[from] InvalidHeaderValue),
+
+  #[error("SQLite database error: {0}")]
   DatabaseSQLiteError(#[from] sqlx::Error),
 
-  #[error("Authenticated user not found for session")]
-  InvalidUtf8,
-  #[error("Authenticated user not found for session")]
-  FailedToExtractBody,
-  #[error("Authenticated user not found for session: {0}")]
+  #[error("Invalid UTF-8 sequence in the input")]
+  InvalidUtf8(#[from] Utf8Error),
+
+  #[error("Failed to extract the request body")]
+  FailedToExtractBody(#[from] BytesRejection),
+
+  #[error("XML deserialization error: {0}")]
   XmlDeserializeError(#[from] quick_xml::DeError),
+
+  #[error("XML serialization error: {0}")]
+  XmlSerializeError(#[from] quick_xml::SeError),
 }
 
 impl IntoResponse for Error {
   fn into_response(self) -> Response<Body> {
     match self {
-      Self::AuthorizationHeaderIsMissing | Self::AuthorizationHeaderInvalidChars | Self::AuthorizationNotFound => (
+      Self::PageNotFound => StatusCode::NOT_FOUND.into_response(),
+      Self::AuthorizationHeaderIsMissing | Self::AuthorizationHeaderInvalidChars | Self::AuthorizationNotBasic => (
         StatusCode::UNAUTHORIZED,
         [(WWW_AUTHENTICATE, r#"Basic realm="2MCA Auth""#)],
         format!("{self}"),
       )
         .into_response(),
-      Self::DatabaseSQLiteError(err) => (StatusCode::INTERNAL_SERVER_ERROR, format!("{err}")).into_response(),
+      Self::InvalidHeaderValue(invalid_header_value) => new_error(
+        StatusCode::INTERNAL_SERVER_ERROR.as_str().to_string(),
+        invalid_header_value.to_string(),
+      )
+      .into_response(),
+      Self::DatabaseSQLiteError(error) => {
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), error.to_string()).into_response()
+      }
+      Self::InvalidUtf8(err) => {
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
+      }
+      Self::FailedToExtractBody(err) => {
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
+      }
+      Self::XmlDeserializeError(de_error) => {
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), de_error.to_string()).into_response()
+      }
+      Self::XmlSerializeError(se_error) => {
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), se_error.to_string()).into_response()
+      }
       Self::AuthenticatedUserNotFound(_) => todo!(),
-      Self::FailedToExtractBody | Self::InvalidUtf8 => (StatusCode::NOT_ACCEPTABLE, "Invalid request").into_response(),
-      Self::XmlDeserializeError(err) => (StatusCode::BAD_REQUEST, format!("{err}")).into_response(),
     }
   }
+}
+
+/// # Errors
+pub fn new_error(title: String, description: String) -> Result<impl IntoResponse, Error> {
+  let mut headers = HeaderMap::new();
+  let content_type = "application/xml;charset=UTF-8".parse()?;
+  headers.insert(CONTENT_TYPE, content_type);
+
+  let response = responses::Response {
+    value: responses::Error {
+      text: title,
+      value: responses::ServerErrorInfo { text: description },
+    },
+  };
+
+  let body =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>".to_owned() + &quick_xml::se::to_string(&response)?;
+
+  Ok((headers, body))
 }
