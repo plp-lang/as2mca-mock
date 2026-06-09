@@ -46,7 +46,12 @@ impl<R: SessionRepository + Send + Sync> SessionService for SessionServiceImpl<R
     })
   }
 
-  async fn deinit(&self, _session_id: SessionId) -> Result<(), Error> {
-    todo!()
+  async fn is_active(&self, session_id: SessionId) -> Result<bool, Error> {
+    self.repo.is_active(&session_id).await
+  }
+
+  async fn deinit(&self, session_id: SessionId) -> Result<(), Error> {
+    self.repo.deinit(&session_id).await?;
+    Ok(())
   }
 }

@@ -17,7 +17,7 @@ pub trait SessionRepository: Send + Sync {
   async fn deinit(&self, session_id: &SessionId) -> Result<(), Error>;
 
   /// Проверяет существует ли сессия и активна ли она
-  async fn is_session_active(&self, session_id: &SessionId) -> Result<bool, Error>;
+  async fn is_active(&self, session_id: &SessionId) -> Result<bool, Error>;
 
   /// Получает данные авторизsации по ID сессии (для валидации при init)
   async fn get_auth_data(&self, session_id: &SessionId) -> Result<Option<AuthData>, Error>;

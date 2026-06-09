@@ -29,6 +29,7 @@ impl SessionRepository for SqliteSessionRepository {
       .bind(auth_data.password())
       .execute(&self.db)
       .await?;
+
     Ok(())
   }
 
@@ -41,15 +42,35 @@ impl SessionRepository for SqliteSessionRepository {
     Ok(())
   }
 
-  async fn deinit(&self, _session_id: &SessionId) -> Result<(), Error> {
-    todo!()
+  async fn deinit(&self, session_id: &SessionId) -> Result<(), Error> {
+    sqlx::query("UPDATE sessions SET expires_at = CURRENT_TIMESTAMP WHERE id = $1")
+      .bind(session_id.as_str())
+      .execute(&self.db)
+      .await?;
+    Ok(())
   }
 
-  async fn is_session_active(&self, _session_id: &SessionId) -> Result<bool, Error> {
-    todo!()
+  async fn is_active(&self, session_id: &SessionId) -> Result<bool, Error> {
+    let is_exists: bool = sqlx::query_scalar(
+      "SELECT EXISTS(
+        SELECT 1 FROM sessions
+        WHERE id = $1 AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+      )",
+    )
+    .bind(session_id.as_str())
+    .fetch_one(&self.db)
+    .await?;
+    Ok(is_exists)
   }
 
-  async fn get_auth_data(&self, _session_id: &SessionId) -> Result<Option<AuthData>, Error> {
-    todo!()
+  async fn get_auth_data(&self, session_id: &SessionId) -> Result<Option<AuthData>, Error> {
+    let row: Option<(String, String)> = sqlx::query_as(
+      "SELECT username, password_hash FROM sessions
+      WHERE id = $1 AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)",
+    )
+    .bind(session_id.as_str())
+    .fetch_optional(&self.db)
+    .await?;
+    Ok(row.map(|(username, password)| AuthData::new(username, password)))
   }
 }

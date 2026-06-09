@@ -20,6 +20,9 @@ pub trait SessionService: Send + Sync {
   /// Даст ответ, успешности инициализации сессии вместе с id отладочной консоли [`SessionData`]
   async fn init(&self, session_id: SessionId) -> Result<SessionData, Error>;
 
+  /// Проверка сессии на валидность
+  async fn is_active(&self, session_id: SessionId) -> Result<bool, Error>;
+
   /// Деинициализация сессии.
   ///
   /// Закрывает сессию, делаю её больше не валидной для последующих запросов.
