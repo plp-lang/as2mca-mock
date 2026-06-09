@@ -6,38 +6,42 @@
 #-----------------------------------------------------------------------------------------------------------------------
 
 prepare:
-    cargo install --locked cargo-edit watchexec-cli
+  cargo install --locked cargo-edit watchexec-cli
 
 update:
-    cargo update
+  cargo update
 
 upgrade: update
-    cargo upgrade --incompatible
-    just build
+  cargo upgrade --incompatible
+  just build
 
 fmt:
-    cargo fmt --all --check
+  cargo fmt --all --check
 
 fmt-fix:
-    cargo fmt --all
+  cargo fmt --all
 
 check:
-    cargo check --all-targets
+  cargo check --all-targets
 
 lint: check
-    cargo clippy --all-targets --all-features -- -D warnings
+  cargo clippy --all-targets --all-features -- -D warnings
 
 lint-fix: check
-    cargo clippy --all-targets --all-features --fix --allow-dirty -- -D warnings
+  cargo clippy --all-targets --all-features --fix --allow-dirty -- -D warnings
 
 test:
-    cargo test
+  cargo test
 
 build: lint-fix fmt-fix test
   cargo build
 
 dev: build
-  watchexec --restart -e rs -- cargo run
+  watchexec --restart -e rs -- cargo run -- --log-filter "trace,tower_http=trace,sqlx=trace" --log-format pretty
+
+prod: lint-fix fmt-fix test
+  cargo build --release
+  ./target/release/plp-mocks
 
 clean:
   cargo clean

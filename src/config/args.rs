@@ -1,11 +1,18 @@
 use clap::Parser;
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, ValueEnum, Serialize, Deserialize)]
+pub enum LogFormat {
+  Pretty,
+  Compact,
+  Json,
+}
 
 #[derive(Parser, Clone, Debug, Serialize, Deserialize)]
 #[command(author, version, long_about = None)]
 pub struct Args {
-  /// Наименование приложения, для симуляции поведения TOMCAT:
-  /// <https://tomcat.apache.org/tomcat-9.0-doc/deployer-howto.html>
+  /// Наименование приложения, префикс для всех HTTP запросов. Повторяет поведение TOMCAT.
   #[arg(short, long, env = "PLP_MOCKS_WEB_APP_NAME", default_value = "platform2mca")]
   pub web_app_name: Box<str>,
 
@@ -17,7 +24,14 @@ pub struct Args {
   #[arg(short, long, env = "PLP_MOCKS_PORT", default_value_t = 3000)]
   pub port: u16,
 
-  /// Включить режим отладки (также читается из `PLP_MOCKS_DEBUG`)
-  #[arg(short, long, env = "PLP_MOCKS_DEBUG", default_value_t = false)]
-  pub debug: bool,
+  /// Формат логирования
+  #[arg(long, env = "PLP_MOCKS_LOG_FORMAT", default_value = "compact")]
+  pub log_format: LogFormat,
+
+  /// Уровень логирования
+  #[arg(long, env = "PLP_MOCKS_LOG_FILTER")]
+  pub log_filter: Option<String>,
+
+  #[arg(env = "RUST_LOG", default_value = "info")]
+  pub rust_log: String,
 }

@@ -1,9 +1,12 @@
 use clap::Parser;
-use plp_mocks::{config::args::Args, representation::app::app};
+use plp_mocks::{config::args::Args, logger::init_tracing, representation::app::app};
 
 #[tokio::main]
 async fn main() {
   let args = Args::parse();
+
+  let log_filter = args.log_filter.as_deref().unwrap_or(&args.rust_log);
+  init_tracing(log_filter, &args.log_format);
 
   let host = args.host.clone();
   let port = args.port;

@@ -1,4 +1,8 @@
-use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
+use log::LevelFilter;
+use sqlx::{
+  ConnectOptions, SqlitePool,
+  sqlite::{SqliteConnectOptions, SqlitePoolOptions},
+};
 
 use crate::error::Error;
 
@@ -6,9 +10,13 @@ use crate::error::Error;
 ///
 /// Ошибка коннекта к базе или ошибка миграции
 pub async fn create_db() -> Result<SqlitePool, Error> {
+  let options = SqliteConnectOptions::new()
+    .in_memory(true)
+    .log_slow_statements(LevelFilter::Warn, std::time::Duration::from_millis(100));
+
   let pool = SqlitePoolOptions::new()
     .max_connections(1)
-    .connect("sqlite::memory:")
+    .connect_with(options)
     .await?;
 
   sqlx::query(

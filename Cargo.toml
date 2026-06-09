@@ -38,13 +38,15 @@ hex = "0.4.3"
 clap = { version = "4.6.1", features = ["derive", "env"] }
 serde = { version = "1.0.228" }
 async-trait = "0.1.89"
+log = { version = "0.4.32", features = ["serde"] }
 tokio = { version = "1.52.3", features = ["full"] }
+tracing = { version = "0.1.44", features = ["attributes"] }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+tower = { version = "0.5.3", features = ["util"] }
+tower-http = { version = "0.6", features = ["trace"] }
 quick-xml = { version = "0.40.1", features = ["serialize"] }
 fake = { version = "5.1.0", features = ["derive"] }
 axum = "0.8.9"
 sqlx = { version = "0.9.0", features = ["runtime-tokio", "sqlite"] }
 cookie = "0.18.1"
 chrono = { version = "0.4.45", features = ["serde"] }
-
-[dev-dependencies]
-tower = { version = "0.5.3", features = ["util"] }
