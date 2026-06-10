@@ -1,5 +1,5 @@
+use as2mca_mock::{config::args::Args, logger::init_tracing, representation::app::app};
 use clap::Parser;
-use plp_mocks::{config::args::Args, logger::init_tracing, representation::app::app};
 
 #[tokio::main]
 async fn main() {

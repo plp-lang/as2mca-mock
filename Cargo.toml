@@ -1,19 +1,20 @@
 [package]
-name = "plp-mocks"
+name = "as2mca-mock"
 version = "0.1.0"
 edition = "2024"
 authors = ["Falldot <fe.offep@gmail.com>"]
 readme = "README.md"
-description = "TODO"
+description = "Aplication Server 2MCA API HTTP Mock Server"
 license = "MIT"
-homepage = "https://github.com/plp-lang/mocks"
-repository = "https://github.com/plp-lang/mocks"
+homepage = "https://github.com/plp-lang/as2mca-mock"
+repository = "https://github.com/plp-lang/as2mca-mock"
 categories = [
-    "development-tools::testing"
+  "development-tools::testing",
+  "web-programming::http-server"
 ]
 keywords = [
-    "testing",
-    "mocks",
+  "testing",
+  "mock",
 ]
 
 [lints.rust]
