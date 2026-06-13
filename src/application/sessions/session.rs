@@ -29,7 +29,8 @@ impl<R: SessionRepository + Send + Sync> SessionService for SessionServiceImpl<R
 
   async fn init(&self, session_id: &SessionId) -> Result<DebugPipeId, Error> {
     // Генерируем случайное 10-значное число
-    let debug_pipe_id = format!("debug${}", (0b0..9_999_999_999).fake::<u64>());
+    let number: u64 = (0..10_000_000_000).fake();
+    let debug_pipe_id = format!("debug${number:010}");
     let debug_pipe_id = DebugPipeId::new(debug_pipe_id);
 
     self.repo.init(session_id, &debug_pipe_id).await?;
