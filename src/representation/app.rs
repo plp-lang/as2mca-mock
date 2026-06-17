@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{
-  Router,
+  Router, middleware,
   routing::{get, post},
 };
 use sqlx::SqlitePool;
@@ -17,7 +17,10 @@ use crate::{
   database::sqlite::create_db,
   domain::services::session::SessionService,
   error::Error,
-  representation::routes::{api::api, auth::authbasic, not_found},
+  representation::{
+    middlewares::logger::log_body,
+    routes::{api::api, auth::authbasic, not_found},
+  },
 };
 
 #[derive(Clone)]
@@ -49,6 +52,7 @@ pub async fn app(args: Args) -> Result<Router, Error> {
     .route("/{war_name}/authbasic", get(authbasic))
     .with_state(AppState::new(args, pool))
     .fallback(not_found)
+    .layer(middleware::from_fn(log_body))
     .layer(
       TraceLayer::new_for_http()
         .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
