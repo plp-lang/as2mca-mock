@@ -1,14 +1,17 @@
 use log::LevelFilter;
 use sqlx::{
   ConnectOptions, SqlitePool,
+  migrate::Migrator,
   sqlite::{SqliteConnectOptions, SqlitePoolOptions},
 };
 
 use crate::error::Error;
 
+static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
+
 /// # Errors
 ///
-/// Ошибка коннекта к базе или ошибка миграции
+/// Ошибка подключения к базе или ошибка миграции
 pub async fn create_db() -> Result<SqlitePool, Error> {
   let options = SqliteConnectOptions::new()
     .in_memory(true)
@@ -19,21 +22,7 @@ pub async fn create_db() -> Result<SqlitePool, Error> {
     .connect_with(options)
     .await?;
 
-  sqlx::query(
-    r"
-        CREATE TABLE sessions (
-          id TEXT PRIMARY KEY,
-          username TEXT NOT NULL,
-          password_hash TEXT NOT NULL,
-          debug_pipe_id TEXT,
-          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          initial_at TEXT,
-          expires_at TEXT
-        );
-        ",
-  )
-  .execute(&pool)
-  .await?;
+  MIGRATOR.run(&pool).await?;
 
   Ok(pool)
 }

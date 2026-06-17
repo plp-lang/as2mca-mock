@@ -33,6 +33,9 @@ pub enum Error {
   #[error("{0}")]
   InvalidHeaderValue(#[from] InvalidHeaderValue),
 
+  #[error("{0}")]
+  MigrateError(#[from] sqlx::migrate::MigrateError),
+
   #[error("SQLite database error: {0}")]
   DatabaseSQLiteError(#[from] sqlx::Error),
 
@@ -53,33 +56,53 @@ impl IntoResponse for Error {
   fn into_response(self) -> Response<Body> {
     match self {
       Self::PageNotFound => StatusCode::NOT_FOUND.into_response(),
+      Self::AuthenticatedUserNotFound(message) => new_error(StatusCode::NOT_FOUND.to_string(), message).into_response(),
+
       Self::AuthorizationHeaderIsMissing | Self::AuthorizationHeaderInvalidChars | Self::AuthorizationNotBasic => (
         StatusCode::UNAUTHORIZED,
         [(WWW_AUTHENTICATE, r#"Basic realm="2MCA Auth""#)],
         format!("{self}"),
       )
         .into_response(),
-      Self::InvalidHeaderValue(invalid_header_value) => new_error(
-        StatusCode::INTERNAL_SERVER_ERROR.as_str().to_string(),
-        invalid_header_value.to_string(),
-      )
-      .into_response(),
+
+      Self::InvalidHeaderValue(invalid_header_value) => {
+        tracing::error!("Invalid header value: {}", invalid_header_value);
+        new_error(
+          StatusCode::INTERNAL_SERVER_ERROR.as_str().to_string(),
+          invalid_header_value.to_string(),
+        )
+        .into_response()
+      }
+
       Self::DatabaseSQLiteError(error) => {
+        tracing::error!("Database SQLite error: {}", error);
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), error.to_string()).into_response()
       }
+
+      Self::MigrateError(error) => {
+        tracing::error!("Database migration error: {}", error);
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), error.to_string()).into_response()
+      }
+
       Self::InvalidUtf8(err) => {
+        tracing::error!("Invalid UTF-8 error: {}", err);
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
       }
+
       Self::FailedToExtractBody(err) => {
+        tracing::error!("Failed to extract body: {}", err);
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
       }
+
       Self::XmlDeserializeError(de_error) => {
+        tracing::error!("XML deserialization error: {}", de_error);
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), de_error.to_string()).into_response()
       }
+
       Self::XmlSerializeError(se_error) => {
+        tracing::error!("XML serialization error: {}", se_error);
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), se_error.to_string()).into_response()
       }
-      Self::AuthenticatedUserNotFound(message) => new_error(StatusCode::NOT_FOUND.to_string(), message).into_response(),
     }
   }
 }
