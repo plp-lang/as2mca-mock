@@ -1,5 +1,9 @@
 use serde::Deserialize;
 
+use crate::representation::dto::SessionId;
+
+pub const XML_HEADER: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#;
+
 #[derive(Debug, Deserialize)]
 pub struct Request {
   #[serde(flatten)]
@@ -10,6 +14,9 @@ pub struct Request {
 pub enum RequestKind {
   SessionInit(SessionInit),
   Disconnect(Disconnect),
+  SystemSettingsGet(SystemSettingsGet),
+  SystemCoreInfoGet(SystemCoreInfoGet),
+  SystemServerVersionGet(SystemServerVersionGet),
 }
 
 #[derive(Debug, Deserialize)]
@@ -21,5 +28,23 @@ pub struct SessionInit {
 #[derive(Debug, Deserialize)]
 pub struct Disconnect {
   #[serde(rename = "@SessionID")]
-  pub session_id: String,
+  pub session_id: SessionId,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SystemSettingsGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SystemCoreInfoGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SystemServerVersionGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
 }

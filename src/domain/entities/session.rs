@@ -28,9 +28,9 @@ impl From<String> for SessionId {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct DebugPipeId(String);
+pub struct DebugPipeName(String);
 
-impl DebugPipeId {
+impl DebugPipeName {
   #[must_use]
   pub const fn new(id: String) -> Self {
     Self(id)
@@ -42,13 +42,13 @@ impl DebugPipeId {
   }
 }
 
-impl fmt::Display for DebugPipeId {
+impl fmt::Display for DebugPipeName {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.0)
   }
 }
 
-impl From<String> for DebugPipeId {
+impl From<String> for DebugPipeName {
   fn from(s: String) -> Self {
     Self::new(s)
   }
@@ -91,5 +91,5 @@ impl fmt::Debug for AuthData {
 #[derive(Debug, Clone)]
 pub struct SessionData {
   pub session_id: SessionId,
-  pub debug_pipe_id: DebugPipeId,
+  pub debug_pipe_id: DebugPipeName,
 }

@@ -3,7 +3,7 @@ use fake::Fake;
 
 use crate::{
   domain::{
-    entities::session::{AuthData, DebugPipeId, SessionId},
+    entities::session::{AuthData, DebugPipeName, SessionId},
     repositories::session::SessionRepository,
     services::session::SessionService,
   },
@@ -27,15 +27,14 @@ impl<R: SessionRepository + Send + Sync> SessionService for SessionServiceImpl<R
     Ok(())
   }
 
-  async fn init(&self, session_id: &SessionId) -> Result<DebugPipeId, Error> {
+  async fn init(&self, session_id: &SessionId) -> Result<DebugPipeName, Error> {
     // Генерируем случайное 10-значное число
     let number: u64 = (0..10_000_000_000).fake();
-    let debug_pipe_id = format!("debug${number:010}");
-    let debug_pipe_id = DebugPipeId::new(debug_pipe_id);
+    let debug_pipe_name = DebugPipeName::new(format!("debug${number:010}"));
 
-    self.repo.init(session_id, &debug_pipe_id).await?;
+    self.repo.init(session_id, &debug_pipe_name).await?;
 
-    Ok(debug_pipe_id)
+    Ok(debug_pipe_name)
   }
 
   async fn is_active(&self, session_id: &SessionId) -> Result<bool, Error> {

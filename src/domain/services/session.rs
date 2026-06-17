@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 
 use crate::{
-  domain::entities::session::{AuthData, DebugPipeId, SessionId},
+  domain::entities::session::{AuthData, DebugPipeName, SessionId},
   error::Error,
 };
 
@@ -17,7 +17,7 @@ pub trait SessionService: Send + Sync {
   ///
   /// Сервис проверит валидность ранее переданных авторизационных данных [`AuthData`].
   /// Даст ответ, успешности инициализации сессии вместе с id отладочной консоли [`DebugPipeId`]
-  async fn init(&self, session_id: &SessionId) -> Result<DebugPipeId, Error>;
+  async fn init(&self, session_id: &SessionId) -> Result<DebugPipeName, Error>;
 
   /// Проверка сессии на валидность
   async fn is_active(&self, session_id: &SessionId) -> Result<bool, Error>;

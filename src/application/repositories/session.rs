@@ -3,7 +3,7 @@ use sqlx::SqlitePool;
 
 use crate::{
   domain::{
-    entities::session::{AuthData, DebugPipeId, SessionId},
+    entities::session::{AuthData, DebugPipeName, SessionId},
     repositories::session::SessionRepository,
   },
   error::Error,
@@ -33,9 +33,9 @@ impl SessionRepository for SqliteSessionRepository {
     Ok(())
   }
 
-  async fn init(&self, session_id: &SessionId, debug_pipe_id: &DebugPipeId) -> Result<(), Error> {
+  async fn init(&self, session_id: &SessionId, debug_pipe_name: &DebugPipeName) -> Result<(), Error> {
     sqlx::query("UPDATE sessions SET debug_pipe_id = $1, initial_at = CURRENT_TIMESTAMP WHERE id = $2")
-      .bind(debug_pipe_id.as_str())
+      .bind(debug_pipe_name.as_str())
       .bind(session_id.as_str())
       .execute(&self.db)
       .await?;
