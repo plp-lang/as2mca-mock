@@ -37,11 +37,11 @@ build: lint-fix fmt-fix test
   cargo build
 
 dev: build
-  watchexec --restart -e rs -- cargo run -- --log-filter "trace,tower_http=trace,sqlx=trace" --log-format pretty
+  watchexec --restart -e rs -- cargo run -- --log-filter "trace" --log-format pretty
 
 prod: lint-fix fmt-fix test
   cargo build --release
-  ./target/release/plp-mocks
+  ./target/release/as2mca-mock
 
 clean:
   cargo clean
