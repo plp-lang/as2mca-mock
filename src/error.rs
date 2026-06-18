@@ -118,8 +118,7 @@ impl IntoResponse for Error {
 /// # Errors
 pub fn new_error(title: String, description: String) -> Result<impl IntoResponse, Error> {
   let mut headers = HeaderMap::new();
-  let content_type = "application/xml;charset=UTF-8".parse()?;
-  headers.insert(CONTENT_TYPE, content_type);
+  headers.insert(CONTENT_TYPE, "text/xml; charset=utf-8".parse()?);
 
   let response = responses::Response {
     body: responses::ResponseKind::Error(responses::Error {

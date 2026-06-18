@@ -12,6 +12,9 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  UserInfoGet(UserInfoGet),
+  AuthenticationURLGet(AuthenticationURLGet),
+  ProtocolInfoGet(ProtocolInfoGet),
   SessionInit(SessionInit),
   Disconnect(Disconnect),
   SystemSettingsGet(SystemSettingsGet),
@@ -20,9 +23,21 @@ pub enum RequestKind {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct UserInfoGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AuthenticationURLGet {}
+
+#[derive(Debug, Deserialize)]
+pub struct ProtocolInfoGet {}
+
+#[derive(Debug, Deserialize)]
 pub struct SessionInit {
   #[serde(rename = "@AliveActiveSession")]
-  pub alive_active_session: String,
+  pub alive_active_session: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

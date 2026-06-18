@@ -10,12 +10,37 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  User(User),
+  AuthenticationURL(AuthenticationURL),
+  ProtocolInfo(ProtocolInfo),
   Session(Session),
   Done(Done),
   Error(Error),
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct User {
+  #[serde(rename = "@Name")]
+  pub name: String,
+  #[serde(rename = "@ShortName")]
+  pub short_name: String,
+  #[serde(rename = "@Properties")]
+  pub properties: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AuthenticationURL {
+  #[serde(rename = "@URL")]
+  pub url: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ProtocolInfo {
+  #[serde(rename = "@Version")]
+  pub version: String,
 }
 
 #[derive(Debug, Serialize)]

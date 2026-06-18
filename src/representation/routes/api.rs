@@ -75,12 +75,29 @@ pub async fn api(
         version: env!("CARGO_PKG_VERSION").to_string(),
       }),
     },
+    RequestKind::ProtocolInfoGet(_protocol_info_get) => responses::Response {
+      body: responses::ResponseKind::ProtocolInfo(responses::ProtocolInfo {
+        version: "9.54".to_string(),
+      }),
+    },
+    RequestKind::AuthenticationURLGet(_url) => responses::Response {
+      body: responses::ResponseKind::AuthenticationURL(responses::AuthenticationURL {
+        url: "/platform2mca/authbasic".to_string(),
+      }),
+    },
+    RequestKind::UserInfoGet(_user_info_get) => responses::Response {
+      body: responses::ResponseKind::User(responses::User {
+        name: "Тест Тест Тестович".to_owned(),
+        short_name: "TEST".to_owned(),
+        properties: "|ADMIN|CONTEXT|PICKER|PROFILE DEFAULT|SESSION|".to_owned(),
+      }),
+    },
   };
 
   let body = XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;
 
   let mut headers = HeaderMap::new();
-  headers.insert(CONTENT_TYPE, "application/xml;charset=UTF-8".parse()?);
+  headers.insert(CONTENT_TYPE, "text/xml; charset=utf-8".parse()?);
   headers.insert(CONTENT_LENGTH, format!("{}", body.len()).parse()?);
 
   Ok((StatusCode::OK, headers, body).into_response())
