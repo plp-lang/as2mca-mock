@@ -1,6 +1,9 @@
 use serde::Serialize;
 
-use crate::representation::dto::{DebugPipeName, SessionId};
+use crate::{
+  domain::entities::settings::Setting,
+  representation::dto::{DebugPipeName, SessionId},
+};
 
 #[derive(Debug, Serialize)]
 pub struct Response {
@@ -96,12 +99,4 @@ pub struct CoreInfo {
 pub struct Settings {
   #[serde(rename = "$value")]
   pub body: Vec<Setting>,
-}
-
-#[derive(Debug, Serialize, Clone)]
-pub struct Setting {
-  #[serde(rename = "@Name")]
-  pub name: String,
-  #[serde(rename = "@Value")]
-  pub value: Option<String>,
 }

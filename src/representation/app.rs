@@ -12,10 +12,13 @@ use tower_http::{
 use tracing::Level;
 
 use crate::{
-  application::{repositories::session::SqliteSessionRepository, sessions::session::SessionServiceImpl},
+  application::{
+    repositories::{session::SqliteSessionRepository, settings::SqliteSettingsRepository},
+    services::{session::SessionServiceImpl, settings::SettingsServiceImpl},
+  },
   config::args::Args,
   database::sqlite::create_db,
-  domain::services::session::SessionService,
+  domain::services::{session::SessionService, settings::SettingsService},
   error::Error,
   representation::{
     middlewares::logger::log_body,
@@ -27,16 +30,18 @@ use crate::{
 pub struct AppState {
   pub args: Args,
   pub session_service: Arc<dyn SessionService>,
+  pub settings_service: Arc<dyn SettingsService>,
 }
 
 impl AppState {
   #[must_use]
   pub fn new(args: Args, pool: SqlitePool) -> Self {
-    let session_repo = SqliteSessionRepository::new(pool);
-    let session_service = SessionServiceImpl::new(session_repo);
+    let session_service = SessionServiceImpl::new(SqliteSessionRepository::new(pool.clone()));
+    let settings_service = SettingsServiceImpl::new(SqliteSettingsRepository::new(pool));
     Self {
       args,
       session_service: Arc::new(session_service),
+      settings_service: Arc::new(settings_service),
     }
   }
 }

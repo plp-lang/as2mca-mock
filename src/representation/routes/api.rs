@@ -17,7 +17,7 @@ use crate::{
     dto::{
       DebugPipeName,
       requests::{Disconnect, Request, RequestKind, XML_HEADER},
-      responses::{self, Setting},
+      responses::{self},
     },
     middlewares::{jsessionid::JSessionId, war_path::WarPath, xml::Xml},
   },
@@ -26,12 +26,12 @@ use crate::{
 /// # Errors
 pub async fn api(
   State(state): State<AppState>,
-  WarPath(_war_name): WarPath,
+  WarPath(war_name): WarPath,
   JSessionId(session_id): JSessionId,
   Xml(request): Xml<Request>,
 ) -> Result<Response<Body>, Error> {
   let data = match request.body {
-    RequestKind::SessionInit(_session_init) => {
+    RequestKind::SessionInit(_) => {
       let debug_pipe_name = state.session_service.init(&session_id.clone().into()).await?;
       responses::Response {
         body: responses::ResponseKind::Session(responses::Session {
@@ -46,18 +46,15 @@ pub async fn api(
         body: responses::ResponseKind::Done(responses::Done {}),
       }
     }
-    RequestKind::SystemSettingsGet(_system_settings_get) => responses::Response {
-      body: responses::ResponseKind::Settings(responses::Settings {
-        body: vec![Setting {
-          name: "test".to_string(),
-          value: Some("test".to_string()),
-        }],
-      }),
-    },
-    RequestKind::SystemCoreInfoGet(_system_core_info_get) => {
+    RequestKind::SystemSettingsGet(_) => {
+      let body = state.settings_service.get_all().await?;
+      responses::Response {
+        body: responses::ResponseKind::Settings(responses::Settings { body }),
+      }
+    }
+    RequestKind::SystemCoreInfoGet(_) => {
       let dt = DateTime::parse_from_str(COMMIT_DATE, "%Y-%m-%d %H:%M:%S %:z")?;
       let aswar_date = dt.format("%d/%m/%Y %H:%M:%S").to_string();
-
       responses::Response {
         body: responses::ResponseKind::CoreInfo(responses::CoreInfo {
           auditor: env!("CARGO_PKG_AUTHORS").to_string(),
@@ -70,22 +67,22 @@ pub async fn api(
         }),
       }
     }
-    RequestKind::SystemServerVersionGet(_system_server_version_get) => responses::Response {
+    RequestKind::SystemServerVersionGet(_) => responses::Response {
       body: responses::ResponseKind::ServerInfo(responses::ServerInfo {
         version: env!("CARGO_PKG_VERSION").to_string(),
       }),
     },
-    RequestKind::ProtocolInfoGet(_protocol_info_get) => responses::Response {
+    RequestKind::ProtocolInfoGet(_) => responses::Response {
       body: responses::ResponseKind::ProtocolInfo(responses::ProtocolInfo {
         version: "9.54".to_string(),
       }),
     },
-    RequestKind::AuthenticationURLGet(_url) => responses::Response {
+    RequestKind::AuthenticationURLGet(_) => responses::Response {
       body: responses::ResponseKind::AuthenticationURL(responses::AuthenticationURL {
-        url: "/platform2mca/authbasic".to_string(),
+        url: format!("/{war_name}/authbasic"),
       }),
     },
-    RequestKind::UserInfoGet(_user_info_get) => responses::Response {
+    RequestKind::UserInfoGet(_) => responses::Response {
       body: responses::ResponseKind::User(responses::User {
         name: "Тест Тест Тестович".to_owned(),
         short_name: "TEST".to_owned(),

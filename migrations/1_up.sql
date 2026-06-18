@@ -7,3 +7,11 @@ CREATE TABLE sessions (
   initial_at TEXT,
   expires_at TEXT
 );
+
+CREATE TABLE settings (
+  name TEXT PRIMARY KEY,
+  value TEXT
+);
+
+INSERT INTO settings VALUES ("test1", "test1");
+INSERT INTO settings VALUES ("test2", "test2");
