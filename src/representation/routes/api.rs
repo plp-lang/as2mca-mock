@@ -16,8 +16,8 @@ use crate::{
     app::AppState,
     dto::{
       DebugPipeName,
-      requests::{Disconnect, Request, RequestKind, XML_HEADER},
-      responses::{self},
+      requests::{Disconnect, Request, RequestKind, SystemNetAddressSet, XML_HEADER},
+      responses::{self, Done},
     },
     middlewares::{jsessionid::JSessionId, war_path::WarPath, xml::Xml},
   },
@@ -88,6 +88,13 @@ pub async fn api(
         short_name: "TEST".to_owned(),
         properties: "|ADMIN|CONTEXT|PICKER|PROFILE DEFAULT|SESSION|".to_owned(),
       }),
+    },
+    RequestKind::SystemNetAddressSet(SystemNetAddressSet {
+      session_id: _,
+      mac_address: _,
+      ip_address: _,
+    }) => responses::Response {
+      body: responses::ResponseKind::Done(Done {}),
     },
   };
 
