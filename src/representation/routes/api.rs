@@ -96,6 +96,11 @@ pub async fn api(
     }) => responses::Response {
       body: responses::ResponseKind::Done(Done {}),
     },
+    RequestKind::NovoAllowedCheck(_) => responses::Response {
+      body: responses::ResponseKind::NovoAllowedCheckResult(responses::NovoAllowedCheckResult {
+        value: "1".to_owned(),
+      }),
+    },
   };
 
   let body = XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;

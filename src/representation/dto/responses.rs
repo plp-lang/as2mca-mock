@@ -13,6 +13,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  NovoAllowedCheckResult(NovoAllowedCheckResult),
   User(User),
   AuthenticationURL(AuthenticationURL),
   ProtocolInfo(ProtocolInfo),
@@ -22,6 +23,12 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct NovoAllowedCheckResult {
+  #[serde(rename = "@Value")]
+  pub value: String,
 }
 
 #[derive(Debug, Serialize, Clone)]
