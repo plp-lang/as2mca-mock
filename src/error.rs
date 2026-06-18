@@ -39,11 +39,14 @@ pub enum Error {
   #[error("SQLite database error: {0}")]
   DatabaseSQLiteError(#[from] sqlx::Error),
 
-  #[error("Invalid UTF-8 sequence in the input")]
+  #[error("Invalid UTF-8 sequence in the input: {0}")]
   InvalidUtf8(#[from] Utf8Error),
 
-  #[error("Failed to extract the request body")]
+  #[error("Failed to extract the request body: {0}")]
   FailedToExtractBody(#[from] BytesRejection),
+
+  #[error("Failed to parse date: {0}")]
+  DateParseError(#[from] chrono::ParseError),
 
   #[error("XML deserialization error: {0}")]
   XmlDeserializeError(#[from] quick_xml::DeError),
@@ -86,6 +89,11 @@ impl IntoResponse for Error {
 
       Self::InvalidUtf8(err) => {
         tracing::error!("Invalid UTF-8 error: {}", err);
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
+      }
+
+      Self::DateParseError(err) => {
+        tracing::error!("Failed to parse date: {}", err);
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
       }
 

@@ -7,6 +7,7 @@ use axum::{
   },
   response::IntoResponse,
 };
+use chrono::DateTime;
 
 use crate::{
   config::args::build::{COMMIT_DATE, COMMIT_HASH, COMMIT_TIMESTAMP},
@@ -53,17 +54,22 @@ pub async fn api(
         }],
       }),
     },
-    RequestKind::SystemCoreInfoGet(_system_core_info_get) => responses::Response {
-      body: responses::ResponseKind::CoreInfo(responses::CoreInfo {
-        auditor: env!("CARGO_PKG_AUTHORS").to_string(),
-        owner: env!("CARGO_PKG_AUTHORS").to_string(),
-        version: env!("CARGO_PKG_VERSION").to_string(),
-        build: COMMIT_TIMESTAMP.to_string(),
-        revision: COMMIT_HASH.to_owned(),
-        as_version: env!("CARGO_PKG_VERSION").to_string(),
-        aswar_date: COMMIT_DATE.to_owned(),
-      }),
-    },
+    RequestKind::SystemCoreInfoGet(_system_core_info_get) => {
+      let dt = DateTime::parse_from_str(COMMIT_DATE, "%Y-%m-%d %H:%M:%S %:z")?;
+      let aswar_date = dt.format("%d/%m/%Y %H:%M:%S").to_string();
+
+      responses::Response {
+        body: responses::ResponseKind::CoreInfo(responses::CoreInfo {
+          auditor: env!("CARGO_PKG_AUTHORS").to_string(),
+          owner: env!("CARGO_PKG_AUTHORS").to_string(),
+          version: env!("CARGO_PKG_VERSION").to_string(),
+          build: COMMIT_TIMESTAMP.to_string(),
+          revision: COMMIT_HASH.to_owned(),
+          as_version: env!("CARGO_PKG_VERSION").to_string(),
+          aswar_date,
+        }),
+      }
+    }
     RequestKind::SystemServerVersionGet(_system_server_version_get) => responses::Response {
       body: responses::ResponseKind::ServerInfo(responses::ServerInfo {
         version: env!("CARGO_PKG_VERSION").to_string(),
