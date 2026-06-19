@@ -328,6 +328,12 @@ pub async fn api(
     }) => responses::Response {
       body: responses::ResponseKind::States(responses::States {}),
     },
+    requests::RequestKind::ClassTransitionsGet(requests::ClassTransitionsGet {
+      session_id: _,
+      class_id: _,
+    }) => responses::Response {
+      body: responses::ResponseKind::Transitions(responses::Transitions {}),
+    },
   };
 
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;

@@ -13,6 +13,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  Transitions(Transitions),
   States(States),
   Columns(Columns),
   Methods(Methods),
@@ -39,6 +40,9 @@ pub enum ResponseKind {
   CoreInfo(CoreInfo),
   Settings(Settings),
 }
+
+#[derive(Debug, Serialize)]
+pub struct Transitions {}
 
 #[derive(Debug, Serialize)]
 pub struct States {}
