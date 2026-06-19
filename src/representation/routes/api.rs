@@ -171,6 +171,9 @@ pub async fn api(
         }],
       }),
     },
+    requests::RequestKind::ClassChildrenGet(_) => responses::Response {
+      body: responses::ResponseKind::ChildClasses(responses::ChildClasses {}),
+    },
   };
 
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;
