@@ -13,6 +13,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  CheckResult(CheckResult),
   OptionInfo(OptionInfo),
   UserProfileProperty(UserProfileProperty),
   #[serde(rename = "User")]
@@ -27,6 +28,13 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename = "User")]
+pub struct CheckResult {
+  #[serde(rename = "@Value")]
+  pub value: String,
 }
 
 #[derive(Debug, Serialize)]

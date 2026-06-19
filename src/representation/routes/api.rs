@@ -20,6 +20,7 @@ use crate::{
 };
 
 /// # Errors
+#[allow(clippy::too_many_lines)]
 pub async fn api(
   State(state): State<AppState>,
   WarPath(war_name): WarPath,
@@ -116,6 +117,9 @@ pub async fn api(
       body: responses::ResponseKind::OptionInfo(responses::OptionInfo {
         enabled: "true".to_owned(),
       }),
+    },
+    requests::RequestKind::UserBelongsGroupCheck(_) => responses::Response {
+      body: responses::ResponseKind::CheckResult(responses::CheckResult { value: "0".to_owned() }),
     },
   };
 
