@@ -13,6 +13,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  Types(Types),
   CheckResult(CheckResult),
   OptionInfo(OptionInfo),
   UserProfileProperty(UserProfileProperty),
@@ -28,6 +29,34 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize)]
+pub struct Types {
+  #[serde(default, rename = "$value")]
+  pub body: Vec<Class>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct Class {
+  #[serde(rename = "@ID")]
+  pub id: String,
+  #[serde(rename = "@Name")]
+  pub name: String,
+  #[serde(rename = "@BaseClassID")]
+  pub base_class_id: String,
+  #[serde(rename = "@EntityID")]
+  pub entity_id: String,
+  #[serde(rename = "@MenuCaption")]
+  pub menu_caption: String,
+  #[serde(rename = "@IsKernelType")]
+  pub is_kernel_type: String,
+  #[serde(rename = "@ClassInterface")]
+  pub class_interface: String,
+  #[serde(rename = "@IsAccessible")]
+  pub is_accessible: String,
+  #[serde(rename = "@Flags")]
+  pub flags: String,
 }
 
 #[derive(Debug, Serialize)]

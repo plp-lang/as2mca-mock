@@ -14,7 +14,10 @@ use crate::{
   error::Error,
   representation::{
     app::AppState,
-    dto::{DebugPipeName, requests, responses},
+    dto::{
+      DebugPipeName, requests,
+      responses::{self, Class},
+    },
     middlewares::{jsessionid::JSessionId, war_path::WarPath, xml::Xml},
   },
 };
@@ -120,6 +123,21 @@ pub async fn api(
     },
     requests::RequestKind::UserBelongsGroupCheck(_) => responses::Response {
       body: responses::ResponseKind::CheckResult(responses::CheckResult { value: "0".to_owned() }),
+    },
+    requests::RequestKind::TypesGet(_) => responses::Response {
+      body: responses::ResponseKind::Types(responses::Types {
+        body: vec![Class {
+          id: "USER".to_string(),
+          name: "Пользователи".to_string(),
+          base_class_id: "STRUCTURE".to_string(),
+          entity_id: "USER".to_string(),
+          menu_caption: "По&льзователи".to_string(),
+          is_kernel_type: "0".to_string(),
+          class_interface: "Z#USER#INTERFACE.CLASS#USER".to_string(),
+          is_accessible: "1".to_string(),
+          flags: "0100101110100000000000000".to_string(),
+        }],
+      }),
     },
   };
 
