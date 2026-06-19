@@ -13,6 +13,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  GuidesGroups(GuidesGroups),
   Types(Types),
   CheckResult(CheckResult),
   OptionInfo(OptionInfo),
@@ -29,6 +30,20 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize)]
+pub struct GuidesGroups {
+  #[serde(default, rename = "$value")]
+  pub body: Vec<GuidesGroup>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GuidesGroup {
+  #[serde(rename = "@ID")]
+  pub id: String,
+  #[serde(rename = "@Name")]
+  pub name: String,
 }
 
 #[derive(Debug, Serialize)]

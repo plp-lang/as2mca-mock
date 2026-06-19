@@ -139,6 +139,14 @@ pub async fn api(
         }],
       }),
     },
+    requests::RequestKind::GuidesGroupsGet(_) => responses::Response {
+      body: responses::ResponseKind::GuidesGroups(responses::GuidesGroups {
+        body: vec![responses::GuidesGroup {
+          id: String::new(),
+          name: String::new(),
+        }],
+      }),
+    },
   };
 
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;
