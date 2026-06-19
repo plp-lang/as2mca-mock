@@ -177,6 +177,12 @@ pub async fn api(
     requests::RequestKind::ClassMethodsGroupsUserGet(_) => responses::Response {
       body: responses::ResponseKind::MethodsGroups(responses::MethodsGroups {}),
     },
+    requests::RequestKind::ClassMethodsGet(requests::ClassMethodsGet {
+      session_id: _,
+      class_id: _,
+    }) => responses::Response {
+      body: responses::ResponseKind::Methods(responses::Methods { body: vec![] }),
+    },
   };
 
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;
