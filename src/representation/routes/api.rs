@@ -101,6 +101,11 @@ pub async fn api(
         value: "1".to_owned(),
       }),
     },
+    RequestKind::SystemUserPrivilegedGet(_) => responses::Response {
+      body: responses::ResponseKind::UserPrivileged(responses::UserPrivileged {
+        is_privileged: "true".to_owned(),
+      }),
+    },
   };
 
   let body = XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;

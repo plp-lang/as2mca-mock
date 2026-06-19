@@ -12,6 +12,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  SystemUserPrivilegedGet(SystemUserPrivilegedGet),
   NovoAllowedCheck(NovoAllowedCheck),
   SystemNetAddressSet(SystemNetAddressSet),
   UserInfoGet(UserInfoGet),
@@ -22,6 +23,12 @@ pub enum RequestKind {
   SystemSettingsGet(SystemSettingsGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
   SystemServerVersionGet(SystemServerVersionGet),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SystemUserPrivilegedGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
 }
 
 #[derive(Debug, Deserialize)]

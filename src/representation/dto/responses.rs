@@ -13,6 +13,8 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  #[serde(rename = "User")]
+  UserPrivileged(UserPrivileged),
   NovoAllowedCheckResult(NovoAllowedCheckResult),
   User(User),
   AuthenticationURL(AuthenticationURL),
@@ -23,6 +25,12 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct UserPrivileged {
+  #[serde(rename = "@IsPrivileged")]
+  pub is_privileged: String,
 }
 
 #[derive(Debug, Serialize, Clone)]
