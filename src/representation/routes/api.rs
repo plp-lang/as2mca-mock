@@ -150,6 +150,27 @@ pub async fn api(
     requests::RequestKind::UserMenuGet(_) => responses::Response {
       body: responses::ResponseKind::UserMenu(responses::UserMenu {}),
     },
+    requests::RequestKind::ClassViewsGet(requests::ClassViewsGet {
+      session_id: _,
+      class_id: _,
+    }) => responses::Response {
+      body: responses::ResponseKind::Views(responses::Views {
+        body: vec![responses::View {
+          id: "4384".to_owned(),
+          name: "Полный список".to_owned(),
+          short_name: "VW_CRIT_USER".to_owned(),
+          is_default: "1".to_owned(),
+          cell_style_script: None,
+          properties: "|AllMethods Y|HasClass|NotObjects|PlPlus|USERCONTEXT 0|".to_owned(),
+          distance: "0".to_owned(),
+          filter_method_short_name: None,
+          filter_method_properties: None,
+          object_rights: "0".to_owned(),
+          to_printer: "1".to_owned(),
+          to_file: "1".to_owned(),
+        }],
+      }),
+    },
   };
 
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;
