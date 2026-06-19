@@ -13,6 +13,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  Columns(Columns),
   Methods(Methods),
   MethodsGroups(MethodsGroups),
   ChildClasses(ChildClasses),
@@ -36,6 +37,48 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize)]
+pub struct Columns {
+  #[serde(default, rename = "$value")]
+  pub body: Vec<Column>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct Column {
+  #[serde(rename = "@Name")]
+  pub name: String,
+  #[serde(rename = "@Width")]
+  pub width: String,
+  #[serde(rename = "@Align")]
+  pub align: String,
+  #[serde(rename = "@Position")]
+  pub position: String,
+  #[serde(rename = "@Qual")]
+  pub qual: String,
+  #[serde(rename = "@Alias")]
+  pub alias: String,
+  #[serde(rename = "@Base")]
+  pub base: String,
+  #[serde(rename = "@IsEditable")]
+  pub is_editable: Option<String>,
+  #[serde(rename = "@IsSizeable")]
+  pub is_sizeable: String,
+  #[serde(rename = "@IsCellStyle")]
+  pub is_cell_style: String,
+  #[serde(rename = "@IsInvisible")]
+  pub is_invisible: String,
+  #[serde(rename = "@TargetClassID")]
+  pub target_class_id: Option<String>,
+  #[serde(rename = "@ReferenceType")]
+  pub reference_type: Option<String>,
+  #[serde(rename = "@Logging")]
+  pub logging: Option<String>,
+  #[serde(rename = "@AbilityPerformOperation")]
+  pub ability_perform_operation: Option<String>,
+  #[serde(rename = "@ReferenceID")]
+  pub reference_id: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
