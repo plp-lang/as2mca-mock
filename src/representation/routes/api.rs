@@ -118,7 +118,11 @@ pub async fn api(
         enabled: "true".to_owned(),
       }),
     },
-    requests::RequestKind::UserBelongsGroupCheck(_) => responses::Response {
+    requests::RequestKind::UserBelongsGroupCheck(_)
+    | requests::RequestKind::ClassNeedCollectionIDCheck(requests::ClassNeedCollectionIDCheck {
+      session_id: _,
+      class_id: _,
+    }) => responses::Response {
       body: responses::ResponseKind::CheckResult(responses::CheckResult { value: "0".to_owned() }),
     },
     requests::RequestKind::TypesGet(_) => responses::Response {
