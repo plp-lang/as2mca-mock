@@ -13,6 +13,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  ViewData(ViewData),
   Transitions(Transitions),
   States(States),
   Columns(Columns),
@@ -39,6 +40,26 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize)]
+pub struct ViewData {
+  #[serde(default, rename = "$value")]
+  pub body: Vec<Row>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct Row {
+  #[serde(default, rename = "$value")]
+  pub body: Vec<RowItem>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RowItem {
+  #[serde(rename = "@ColumnName")]
+  pub column_name: String,
+  #[serde(rename = "@Value")]
+  pub value: String,
 }
 
 #[derive(Debug, Serialize)]
