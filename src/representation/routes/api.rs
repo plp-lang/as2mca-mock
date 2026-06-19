@@ -109,6 +109,9 @@ pub async fn api(
         is_privileged: "true".to_owned(),
       }),
     },
+    requests::RequestKind::UserProfilePropertyGet(_) => responses::Response {
+      body: responses::ResponseKind::UserProfileProperty(responses::UserProfileProperty { value: String::new() }),
+    },
   };
 
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;

@@ -13,6 +13,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  UserProfileProperty(UserProfileProperty),
   #[serde(rename = "User")]
   UserPrivileged(UserPrivileged),
   NovoAllowedCheckResult(NovoAllowedCheckResult),
@@ -25,6 +26,13 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename = "User")]
+pub struct UserProfileProperty {
+  #[serde(rename = "@Value")]
+  pub value: String,
 }
 
 #[derive(Debug, Serialize, Clone)]
