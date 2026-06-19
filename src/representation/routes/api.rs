@@ -14,10 +14,7 @@ use crate::{
   error::Error,
   representation::{
     app::AppState,
-    dto::{
-      DebugPipeName, requests,
-      responses::{self, Class, GuideClass},
-    },
+    dto::{DebugPipeName, requests, responses},
     middlewares::{jsessionid::JSessionId, war_path::WarPath, xml::Xml},
   },
 };
@@ -126,7 +123,7 @@ pub async fn api(
     },
     requests::RequestKind::TypesGet(_) => responses::Response {
       body: responses::ResponseKind::Types(responses::Types {
-        body: vec![Class {
+        body: vec![responses::Class {
           id: "USER".to_string(),
           name: "Пользователи".to_string(),
           base_class_id: "STRUCTURE".to_string(),
@@ -148,18 +145,10 @@ pub async fn api(
       }),
     },
     requests::RequestKind::GuidesGet(_) => responses::Response {
-      body: responses::ResponseKind::Guides(responses::Guides {
-        body: vec![GuideClass {
-          id: "USER".to_string(),
-          group_id: None,
-          name: "Пользователи".to_string(),
-          base_class_id: "STRUCTURE".to_string(),
-          entity_id: "USER".to_string(),
-          is_kernel_type: "0".to_string(),
-          class_interface: "Z#USER#INTERFACE.CLASS#USER".to_string(),
-          flags: "0100101110100000000000000".to_string(),
-        }],
-      }),
+      body: responses::ResponseKind::Guides(responses::Guides { body: vec![] }),
+    },
+    requests::RequestKind::UserMenuGet(_) => responses::Response {
+      body: responses::ResponseKind::UserMenu(responses::UserMenu {}),
     },
   };
 

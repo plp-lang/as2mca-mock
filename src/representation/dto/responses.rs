@@ -13,6 +13,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  UserMenu(UserMenu),
   Guides(Guides),
   GuidesGroups(GuidesGroups),
   Types(Types),
@@ -32,6 +33,9 @@ pub enum ResponseKind {
   CoreInfo(CoreInfo),
   Settings(Settings),
 }
+
+#[derive(Debug, Serialize)]
+pub struct UserMenu {}
 
 #[derive(Debug, Serialize)]
 pub struct Guides {
