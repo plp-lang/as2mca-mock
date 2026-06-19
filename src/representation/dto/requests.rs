@@ -12,6 +12,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  SystemOptionEnabledCheck(SystemOptionEnabledCheck),
   UserProfilePropertyGet(UserProfilePropertyGet),
   NetworkInformationSet(NetworkInformationSet),
   SystemUserPrivilegedGet(SystemUserPrivilegedGet),
@@ -25,6 +26,14 @@ pub enum RequestKind {
   SystemSettingsGet(SystemSettingsGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
   SystemServerVersionGet(SystemServerVersionGet),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SystemOptionEnabledCheck {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@OptionName")]
+  pub option_name: String,
 }
 
 #[derive(Debug, Deserialize)]

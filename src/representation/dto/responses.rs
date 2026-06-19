@@ -13,6 +13,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  OptionInfo(OptionInfo),
   UserProfileProperty(UserProfileProperty),
   #[serde(rename = "User")]
   UserPrivileged(UserPrivileged),
@@ -26,6 +27,12 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize)]
+pub struct OptionInfo {
+  #[serde(rename = "@Enabled")]
+  pub enabled: String,
 }
 
 #[derive(Debug, Serialize)]

@@ -112,6 +112,11 @@ pub async fn api(
     requests::RequestKind::UserProfilePropertyGet(_) => responses::Response {
       body: responses::ResponseKind::UserProfileProperty(responses::UserProfileProperty { value: String::new() }),
     },
+    requests::RequestKind::SystemOptionEnabledCheck(_) => responses::Response {
+      body: responses::ResponseKind::OptionInfo(responses::OptionInfo {
+        enabled: "true".to_owned(),
+      }),
+    },
   };
 
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;
