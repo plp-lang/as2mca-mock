@@ -13,6 +13,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  BackwardReferences(BackwardReferences),
   ViewData(ViewData),
   Transitions(Transitions),
   States(States),
@@ -40,6 +41,24 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize)]
+pub struct BackwardReferences {
+  #[serde(default, rename = "$value")]
+  pub body: Vec<BackwardReference>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct BackwardReference {
+  #[serde(rename = "@ClassID")]
+  pub class_id: String,
+  #[serde(rename = "@ClassName")]
+  pub class_name: String,
+  #[serde(rename = "@Qual")]
+  pub qual: String,
+  #[serde(rename = "@QualName")]
+  pub qual_name: String,
 }
 
 #[derive(Debug, Serialize)]

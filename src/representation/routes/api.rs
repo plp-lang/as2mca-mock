@@ -311,6 +311,13 @@ pub async fn api(
         }],
       }),
     },
+    requests::RequestKind::ObjectBackwardReferencesGet(requests::ObjectBackwardReferencesGet {
+      session_id: _,
+      object_id: _,
+      class_id: _,
+    }) => responses::Response {
+      body: responses::ResponseKind::BackwardReferences(responses::BackwardReferences { body: vec![] }),
+    },
   };
 
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;
