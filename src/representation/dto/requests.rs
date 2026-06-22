@@ -12,6 +12,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  SystemSettingGet(SystemSettingGet),
   PipeTextGet(PipeTextGet),
   ObjectBackwardReferencesGet(ObjectBackwardReferencesGet),
   ViewDataGetCancelable(ViewDataGetCancelable),
@@ -42,6 +43,14 @@ pub enum RequestKind {
   SystemSettingsGet(SystemSettingsGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
   SystemServerVersionGet(SystemServerVersionGet),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SystemSettingGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@Name")]
+  pub name: String,
 }
 
 #[derive(Debug, Deserialize)]

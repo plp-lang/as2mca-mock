@@ -11,6 +11,7 @@ use chrono::DateTime;
 
 use crate::{
   config::args::build::{COMMIT_DATE, COMMIT_HASH, COMMIT_TIMESTAMP},
+  domain::entities::settings::Setting,
   error::Error,
   representation::{
     app::AppState,
@@ -326,6 +327,16 @@ pub async fn api(
         value: "test".to_string(),
       }),
     },
+    requests::RequestKind::SystemSettingGet(requests::SystemSettingGet { session_id: _, name }) => {
+      let setting = state
+        .settings_service
+        .get_one(&name)
+        .await?
+        .unwrap_or(Setting { name, value: None });
+      responses::Response {
+        body: responses::ResponseKind::Setting(setting),
+      }
+    }
   };
 
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;

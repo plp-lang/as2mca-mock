@@ -1,9 +1,11 @@
 use serde::Serialize;
 
 use crate::{
-  domain::entities::settings::Setting,
+  domain::entities,
   representation::dto::{DebugPipeName, SessionId},
 };
+
+pub type Setting = entities::settings::Setting;
 
 #[derive(Debug, Serialize)]
 pub struct Response {
@@ -13,6 +15,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  Setting(Setting),
   PipeText(PipeText),
   BackwardReferences(BackwardReferences),
   ViewData(ViewData),

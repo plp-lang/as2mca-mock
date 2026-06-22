@@ -19,6 +19,10 @@ impl<R: SettingsRepository> SettingsServiceImpl<R> {
 
 #[async_trait]
 impl<R: SettingsRepository + Send + Sync> SettingsService for SettingsServiceImpl<R> {
+  async fn get_one(&self, name: &str) -> Result<Option<Setting>, Error> {
+    self.repo.get_one(name).await
+  }
+
   async fn get_all(&self) -> Result<Vec<Setting>, Error> {
     self.repo.get_all().await
   }
