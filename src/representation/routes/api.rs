@@ -337,6 +337,14 @@ pub async fn api(
         body: responses::ResponseKind::Setting(setting),
       }
     }
+    requests::RequestKind::DebugTextGet(requests::DebugTextGet {
+      session_id: _,
+      direction: _,
+    }) => responses::Response {
+      body: responses::ResponseKind::DebugText(responses::DebugText {
+        value: "test".to_string(),
+      }),
+    },
   };
 
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;

@@ -15,6 +15,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  DebugText(DebugText),
   Setting(Setting),
   PipeText(PipeText),
   BackwardReferences(BackwardReferences),
@@ -45,6 +46,12 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize)]
+pub struct DebugText {
+  #[serde(default, rename = "@Value")]
+  pub value: String,
 }
 
 #[derive(Debug, Serialize)]
