@@ -318,6 +318,14 @@ pub async fn api(
     }) => responses::Response {
       body: responses::ResponseKind::BackwardReferences(responses::BackwardReferences { body: vec![] }),
     },
+    requests::RequestKind::PipeTextGet(requests::PipeTextGet {
+      session_id: _,
+      pipe_name: _,
+    }) => responses::Response {
+      body: responses::ResponseKind::PipeText(responses::PipeText {
+        value: "test".to_string(),
+      }),
+    },
   };
 
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;
