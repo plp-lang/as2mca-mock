@@ -20,7 +20,30 @@ impl SqliteViewRepository {
 #[async_trait]
 impl ViewRepository for SqliteViewRepository {
   async fn get_by_class(&self, class_id: &str) -> Result<Vec<View>, Error> {
-    let views = sqlx::query_as::<_, View>("SELECT id, name, short_name, properties, distance, object_rights, is_default, to_printer, to_file, cell_style_script, filter_method_short_name, filter_method_properties, hints, order_by FROM view WHERE class_id = $1").bind(class_id).fetch_all(&self.db).await?;
+    let views = sqlx::query_as::<_, View>(
+      "
+      SELECT
+        v.id,
+        v.name,
+        v.short_name,
+        v.properties,
+        v.distance,
+        v.object_rights,
+        v.is_default,
+        v.to_printer,
+        v.to_file,
+        v.cell_style_script,
+        v.filter_method_short_name,
+        v.filter_method_properties,
+        v.hints,
+        v.order_by
+      FROM view v
+      JOIN class c ON c.id = v.class_id
+      WHERE c.class_id = $1",
+    )
+    .bind(class_id)
+    .fetch_all(&self.db)
+    .await?;
     Ok(views)
   }
 }

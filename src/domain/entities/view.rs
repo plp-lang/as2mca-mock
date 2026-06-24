@@ -1,12 +1,14 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sqlx::prelude::FromRow;
+use sqlx::sqlite::SqliteValueRef;
+use sqlx::{Decode, Encode, Sqlite, Type};
 
 use crate::domain::entities::bool_as_str;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct View {
   #[serde(rename = "@ID")]
-  pub id: u64,
+  pub id: ViewId,
 
   #[serde(rename = "@Name")]
   pub name: String,
@@ -46,4 +48,52 @@ pub struct View {
 
   #[serde(rename = "@OrderBy")]
   pub order_by: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ViewId(pub i64);
+
+impl Serialize for ViewId {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    serializer.serialize_str(&self.0.to_string())
+  }
+}
+
+impl<'de> Deserialize<'de> for ViewId {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: Deserializer<'de>,
+  {
+    let s = String::deserialize(deserializer)?;
+    let id = s.parse().map_err(serde::de::Error::custom)?;
+    Ok(Self(id))
+  }
+}
+
+impl Type<Sqlite> for ViewId {
+  fn type_info() -> <Sqlite as sqlx::Database>::TypeInfo {
+    <i64 as Type<Sqlite>>::type_info()
+  }
+
+  fn compatible(ty: &<Sqlite as sqlx::Database>::TypeInfo) -> bool {
+    <i64 as Type<Sqlite>>::compatible(ty)
+  }
+}
+
+impl<'r> Decode<'r, Sqlite> for ViewId {
+  fn decode(value: SqliteValueRef<'r>) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    Ok(Self(<i64 as Decode<Sqlite>>::decode(value)?))
+  }
+}
+
+impl<'q> Encode<'q, Sqlite> for ViewId {
+  fn encode_by_ref(
+    &self,
+    buf: &mut <Sqlite as sqlx::Database>::ArgumentBuffer,
+  ) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
+    <i64 as Encode<'q, Sqlite>>::encode_by_ref(&self.0, buf)
+  }
 }

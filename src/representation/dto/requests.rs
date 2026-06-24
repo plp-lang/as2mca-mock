@@ -1,6 +1,9 @@
 use serde::Deserialize;
 
-use crate::representation::dto::{DebugPipeName, SessionId};
+use crate::{
+  domain::entities::view::ViewId,
+  representation::dto::{DebugPipeName, SessionId},
+};
 
 pub const XML_HEADER: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#;
 
@@ -117,7 +120,7 @@ pub struct ViewColumnsGet {
   #[serde(rename = "@SessionID")]
   pub session_id: SessionId,
   #[serde(rename = "@ViewID")]
-  pub view_id: String,
+  pub view_id: ViewId,
 }
 
 #[derive(Debug, Deserialize)]

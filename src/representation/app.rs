@@ -14,16 +14,19 @@ use tracing::Level;
 use crate::{
   application::{
     repositories::{
-      class::SqliteClassRepository, session::SqliteSessionRepository, settings::SqliteSettingsRepository,
-      view::SqliteViewRepository,
+      class::SqliteClassRepository, column::SqliteColumnRepository, session::SqliteSessionRepository,
+      settings::SqliteSettingsRepository, view::SqliteViewRepository,
     },
     services::{
-      class::ClassServiceImpl, session::SessionServiceImpl, settings::SettingsServiceImpl, view::ViewServiceImpl,
+      class::ClassServiceImpl, column::ColumnServiceImpl, session::SessionServiceImpl, settings::SettingsServiceImpl,
+      view::ViewServiceImpl,
     },
   },
   config::args::Args,
   database::sqlite::create_db,
-  domain::services::{class::ClassService, session::SessionService, settings::SettingsService, view::ViewService},
+  domain::services::{
+    class::ClassService, column::ColumnService, session::SessionService, settings::SettingsService, view::ViewService,
+  },
   error::Error,
   representation::{
     middlewares::logger::log_body,
@@ -36,8 +39,9 @@ pub struct AppState {
   pub args: Args,
   pub session_service: Arc<dyn SessionService>,
   pub settings_service: Arc<dyn SettingsService>,
-  pub view_service: Arc<dyn ViewService>,
   pub class_service: Arc<dyn ClassService>,
+  pub view_service: Arc<dyn ViewService>,
+  pub column_service: Arc<dyn ColumnService>,
 }
 
 impl AppState {
@@ -45,14 +49,16 @@ impl AppState {
   pub fn new(args: Args, pool: SqlitePool) -> Self {
     let session_service = SessionServiceImpl::new(SqliteSessionRepository::new(pool.clone()));
     let settings_service = SettingsServiceImpl::new(SqliteSettingsRepository::new(pool.clone()));
+    let class_service = ClassServiceImpl::new(SqliteClassRepository::new(pool.clone()));
     let view_service = ViewServiceImpl::new(SqliteViewRepository::new(pool.clone()));
-    let class_service = ClassServiceImpl::new(SqliteClassRepository::new(pool));
+    let column_service = ColumnServiceImpl::new(SqliteColumnRepository::new(pool));
     Self {
       args,
       session_service: Arc::new(session_service),
       settings_service: Arc::new(settings_service),
-      view_service: Arc::new(view_service),
       class_service: Arc::new(class_service),
+      view_service: Arc::new(view_service),
+      column_service: Arc::new(column_service),
     }
   }
 }
