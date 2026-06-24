@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 
-use crate::domain::entities::deserialize_bool_from_str;
+use crate::domain::entities::bool_as_str;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct View {
@@ -14,8 +14,7 @@ pub struct View {
   #[serde(rename = "@ShortName")]
   pub short_name: String,
 
-  // IsDefault принимает значения "1" или "0"
-  #[serde(rename = "@IsDefault", deserialize_with = "deserialize_bool_from_str")]
+  #[serde(rename = "@IsDefault", with = "bool_as_str")]
   pub is_default: bool,
 
   #[serde(rename = "@CellStyleScript")]
@@ -36,17 +35,15 @@ pub struct View {
   #[serde(rename = "@ObjectRights")]
   pub object_rights: u32,
 
-  // ToPrinter принимает значения "1" или "0"
-  #[serde(rename = "@ToPrinter", deserialize_with = "deserialize_bool_from_str")]
+  #[serde(rename = "@ToPrinter", with = "bool_as_str")]
   pub to_printer: bool,
 
-  // ToFile принимает значения "1" или "0"
-  #[serde(rename = "@ToFile", deserialize_with = "deserialize_bool_from_str")]
+  #[serde(rename = "@ToFile", with = "bool_as_str")]
   pub to_file: bool,
 
   #[serde(rename = "@Hints")]
-  pub hints: Option<String>, // Встречается редко замечено значение "DBI_READY"
+  pub hints: Option<String>,
 
   #[serde(rename = "@OrderBy")]
-  pub order_by: Option<String>, // содержит PL/SQL код
+  pub order_by: Option<String>,
 }

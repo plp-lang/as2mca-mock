@@ -13,12 +13,17 @@ use tracing::Level;
 
 use crate::{
   application::{
-    repositories::{session::SqliteSessionRepository, settings::SqliteSettingsRepository, view::SqliteViewRepository},
-    services::{session::SessionServiceImpl, settings::SettingsServiceImpl, view::ViewServiceImpl},
+    repositories::{
+      class::SqliteClassRepository, session::SqliteSessionRepository, settings::SqliteSettingsRepository,
+      view::SqliteViewRepository,
+    },
+    services::{
+      class::ClassServiceImpl, session::SessionServiceImpl, settings::SettingsServiceImpl, view::ViewServiceImpl,
+    },
   },
   config::args::Args,
   database::sqlite::create_db,
-  domain::services::{session::SessionService, settings::SettingsService, view::ViewService},
+  domain::services::{class::ClassService, session::SessionService, settings::SettingsService, view::ViewService},
   error::Error,
   representation::{
     middlewares::logger::log_body,
@@ -32,6 +37,7 @@ pub struct AppState {
   pub session_service: Arc<dyn SessionService>,
   pub settings_service: Arc<dyn SettingsService>,
   pub view_service: Arc<dyn ViewService>,
+  pub class_service: Arc<dyn ClassService>,
 }
 
 impl AppState {
@@ -39,12 +45,14 @@ impl AppState {
   pub fn new(args: Args, pool: SqlitePool) -> Self {
     let session_service = SessionServiceImpl::new(SqliteSessionRepository::new(pool.clone()));
     let settings_service = SettingsServiceImpl::new(SqliteSettingsRepository::new(pool.clone()));
-    let view_service = ViewServiceImpl::new(SqliteViewRepository::new(pool));
+    let view_service = ViewServiceImpl::new(SqliteViewRepository::new(pool.clone()));
+    let class_service = ClassServiceImpl::new(SqliteClassRepository::new(pool));
     Self {
       args,
       session_service: Arc::new(session_service),
       settings_service: Arc::new(settings_service),
       view_service: Arc::new(view_service),
+      class_service: Arc::new(class_service),
     }
   }
 }
