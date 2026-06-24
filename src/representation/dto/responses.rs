@@ -1,7 +1,11 @@
 use serde::Serialize;
 
 use crate::{
-  domain::entities::{self, class::Class, column::Column, view::View},
+  domain::entities::{
+    self,
+    class::Class,
+    view::{Column, View},
+  },
   representation::dto::{DebugPipeName, SessionId},
 };
 

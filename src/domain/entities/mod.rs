@@ -1,5 +1,4 @@
 pub mod class;
-pub mod column;
 pub mod flags;
 pub mod session;
 pub mod settings;

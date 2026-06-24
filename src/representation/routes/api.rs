@@ -150,7 +150,7 @@ pub async fn api(
       session_id: _,
       class_id,
     }) => {
-      let body = state.view_service.get_by_class(&class_id).await?;
+      let body = state.view_service.get_view_by_class(&class_id).await?;
       responses::Response {
         body: responses::ResponseKind::Views(responses::Views { body }),
       }
@@ -168,7 +168,7 @@ pub async fn api(
       body: responses::ResponseKind::Methods(responses::Methods { body: vec![] }),
     },
     requests::RequestKind::ViewColumnsGet(requests::ViewColumnsGet { session_id: _, view_id }) => {
-      let body = state.column_service.get_by_view_id(&view_id).await?;
+      let body = state.view_service.get_columns_by_view_id(&view_id).await?;
       responses::Response {
         body: responses::ResponseKind::Columns(responses::Columns { body }),
       }

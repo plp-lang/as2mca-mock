@@ -1,7 +1,11 @@
 use async_trait::async_trait;
 
 use crate::{
-  domain::{entities::view::View, repositories::view::ViewRepository, services::view::ViewService},
+  domain::{
+    entities::view::{Column, View, ViewId},
+    repositories::view::ViewRepository,
+    services::view::ViewService,
+  },
   error::Error,
 };
 
@@ -17,7 +21,11 @@ impl<R: ViewRepository> ViewServiceImpl<R> {
 
 #[async_trait]
 impl<R: ViewRepository + Send + Sync> ViewService for ViewServiceImpl<R> {
-  async fn get_by_class(&self, class_id: &str) -> Result<Vec<View>, Error> {
-    self.repo.get_by_class(class_id).await
+  async fn get_view_by_class(&self, class_id: &str) -> Result<Vec<View>, Error> {
+    self.repo.get_view_by_class(class_id).await
+  }
+
+  async fn get_columns_by_view_id(&self, view_id: &ViewId) -> Result<Vec<Column>, Error> {
+    self.repo.get_columns_by_view_id(view_id).await
   }
 }

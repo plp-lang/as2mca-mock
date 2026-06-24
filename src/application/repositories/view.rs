@@ -2,7 +2,10 @@ use async_trait::async_trait;
 use sqlx::SqlitePool;
 
 use crate::{
-  domain::{entities::view::View, repositories::view::ViewRepository},
+  domain::{
+    entities::view::{Column, View, ViewId},
+    repositories::view::ViewRepository,
+  },
   error::Error,
 };
 
@@ -19,7 +22,7 @@ impl SqliteViewRepository {
 
 #[async_trait]
 impl ViewRepository for SqliteViewRepository {
-  async fn get_by_class(&self, class_id: &str) -> Result<Vec<View>, Error> {
+  async fn get_view_by_class(&self, class_id: &str) -> Result<Vec<View>, Error> {
     let views = sqlx::query_as::<_, View>(
       "
       SELECT
@@ -45,5 +48,34 @@ impl ViewRepository for SqliteViewRepository {
     .fetch_all(&self.db)
     .await?;
     Ok(views)
+  }
+
+  async fn get_columns_by_view_id(&self, view_id: &ViewId) -> Result<Vec<Column>, Error> {
+    let columns = sqlx::query_as::<_, Column>(
+      "
+      SELECT
+        name
+        , width
+        , align
+        , position
+        , qual
+        , alias
+        , base
+        , is_editable
+        , is_sizeable
+        , is_cell_style
+        , is_invisible
+        , target_class_id
+        , reference_type
+        , logging
+        , ability_perform_operation
+        , reference_id
+      FROM column
+      WHERE view_id = $1",
+    )
+    .bind(view_id)
+    .fetch_all(&self.db)
+    .await?;
+    Ok(columns)
   }
 }
