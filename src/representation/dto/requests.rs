@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 
 use crate::{
   domain::entities::view::ViewId,
@@ -95,8 +95,8 @@ pub struct ViewDataGetCancelable {
   pub hint: String,
   #[serde(rename = "@AllowTimestampMilliseconds")]
   pub allow_timestamp_milliseconds: String,
-  #[serde(rename = "@RowsLimit")]
-  pub rows_limit: String,
+  #[serde(rename = "@RowsLimit", deserialize_with = "string_to_i64")]
+  pub rows_limit: i64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -287,4 +287,12 @@ pub struct SystemCoreInfoGet {
 pub struct SystemServerVersionGet {
   #[serde(rename = "@SessionID")]
   pub session_id: SessionId,
+}
+
+fn string_to_i64<'de, D>(deserializer: D) -> Result<i64, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let s: String = String::deserialize(deserializer)?;
+  s.parse::<i64>().map_err(serde::de::Error::custom)
 }

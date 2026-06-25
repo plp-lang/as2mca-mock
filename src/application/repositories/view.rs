@@ -3,7 +3,7 @@ use sqlx::SqlitePool;
 
 use crate::{
   domain::{
-    entities::view::{Column, View, ViewId},
+    entities::view::{Column, RawRow, Row, RowItem, View, ViewDataGet, ViewId},
     repositories::view::ViewRepository,
   },
   error::Error,
@@ -77,5 +77,57 @@ impl ViewRepository for SqliteViewRepository {
     .fetch_all(&self.db)
     .await?;
     Ok(columns)
+  }
+
+  async fn get_rows(&self, view_data_get: &ViewDataGet) -> Result<Vec<Row>, Error> {
+    let raw_rows = sqlx::query_as::<_, RawRow>(
+      "
+        WITH target_view AS (
+            SELECT v.id AS view_id
+            FROM view v
+            JOIN class c ON c.id = v.class_id
+            WHERE v.short_name = $1
+            AND c.class_id = $2
+        ),
+        limited_row_ids AS (
+            SELECT DISTINCT ri.row_id
+            FROM row_item ri
+            WHERE ri.view_id = (SELECT view_id FROM target_view)
+            ORDER BY ri.row_id
+            LIMIT $3
+        )
+        SELECT ri.row_id, ri.name, ri.value
+        FROM row_item ri
+        WHERE ri.view_id = (SELECT view_id FROM target_view)
+        AND ri.row_id IN (SELECT row_id FROM limited_row_ids)
+        ORDER BY ri.row_id, ri.name
+        ",
+    )
+    .bind(view_data_get.view_short_name)
+    .bind(view_data_get.class_short_name)
+    .bind(view_data_get.rows_limit)
+    .fetch_all(&self.db)
+    .await?;
+
+    let mut rows: Vec<Row> = Vec::new();
+    let mut current_row_id: Option<i64> = None;
+
+    for raw in raw_rows {
+      match current_row_id {
+        Some(id) if id == raw.row_id => {
+          let RawRow { name, value, .. } = raw;
+          rows.last_mut().unwrap().row_items.push(RowItem { name, value });
+        }
+        _ => {
+          let RawRow { row_id, name, value } = raw;
+          current_row_id = Some(row_id);
+          rows.push(Row {
+            row_items: vec![RowItem { name, value }],
+          });
+        }
+      }
+    }
+
+    Ok(rows)
   }
 }

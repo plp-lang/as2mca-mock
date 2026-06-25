@@ -176,3 +176,31 @@ pub enum Logging {
   #[sqlx(rename = "D")]
   Delete,
 }
+
+#[derive(Debug, Clone)]
+pub struct ViewDataGet<'a> {
+  pub view_short_name: &'a str,
+  pub class_short_name: &'a str,
+  pub rows_limit: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Row {
+  #[serde(default, rename = "$value")]
+  pub row_items: Vec<RowItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RowItem {
+  #[serde(rename = "@ColumnName")]
+  pub name: String,
+  #[serde(rename = "@Value")]
+  pub value: String,
+}
+
+#[derive(Debug, Clone, FromRow)]
+pub struct RawRow {
+  pub row_id: i64,
+  pub name: String,
+  pub value: String,
+}

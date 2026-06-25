@@ -2,7 +2,7 @@ use async_trait::async_trait;
 
 use crate::{
   domain::{
-    entities::view::{Column, View, ViewId},
+    entities::view::{Column, Row, View, ViewDataGet, ViewId},
     repositories::view::ViewRepository,
     services::view::ViewService,
   },
@@ -27,5 +27,9 @@ impl<R: ViewRepository + Send + Sync> ViewService for ViewServiceImpl<R> {
 
   async fn get_columns_by_view_id(&self, view_id: &ViewId) -> Result<Vec<Column>, Error> {
     self.repo.get_columns_by_view_id(view_id).await
+  }
+
+  async fn get_rows(&self, view_data_get: &ViewDataGet) -> Result<Vec<Row>, Error> {
+    self.repo.get_rows(view_data_get).await
   }
 }

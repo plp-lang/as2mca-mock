@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS view (
 
 CREATE TABLE IF NOT EXISTS column (
     id INTEGER PRIMARY KEY,
-    view_id INTEGER,
+    view_id INTEGER NOT NULL,
     alias TEXT NOT NULL UNIQUE,
 
     name TEXT NOT NULL,
@@ -86,6 +86,16 @@ CREATE TABLE IF NOT EXISTS column (
     FOREIGN KEY(view_id) REFERENCES view(id)
 );
 
+CREATE TABLE IF NOT EXISTS row_item (
+    id INTEGER PRIMARY KEY,
+    row_id INTEGER NOT NULL,
+    view_id INTEGER NOT NULL,
+
+    name TEXT NOT NULL,
+    value TEXT NOT NULL,
+
+    FOREIGN KEY(view_id) REFERENCES view(id)
+);
 
 INSERT INTO settings
 VALUES  ("test1", "test1"),
@@ -93,14 +103,26 @@ VALUES  ("test1", "test1"),
 
 INSERT INTO class(id, class_id, name, base_class_id, entity_id, menu_caption, class_interface, is_accessible, flags)
 VALUES  (0, "USER",    "Пользователи",     "STRUCTURE", "USER",    "По&льзователи",  "Z#USER#INTERFACE.CLASS#USER",        1, "0100101110100000000000000"),
-        (1, "CL_PRIV", "Физические лица",  "STRUCTURE", "CLIENT",  "&Клиенты",       "Z#CL_PRIV#INTERFACE.CLASS#CL_PRIV",  1, "0100110000100010000010000");
+        (1, "CL_PRIV", "Физические лица",  "STRUCTURE", "CLIENT",  "&Клиенты",       "Z#CL_PRIV#INTERFACE.CLASS#CL_PRIV",  1, "0100110000100010000010000")
+;
 
 INSERT INTO view(id, class_id, name, short_name, properties, is_default, to_printer, to_file)
-VALUES  (4384,  0, "Полный список",   "VW_CRIT_USER",   "|AllMethods Y|HasClass|NotObjects|PlPlus|USERCONTEXT 0|", 1, 1, 1),
-        (1,     0, "Полный список 2", "VW_CRIT_USER_2", "|AllMethods Y|HasClass|NotObjects|PlPlus|USERCONTEXT 0|", 0, 1, 1);
+VALUES  -- ::[USER].[VW_CRIT_USER] "Полный список"
+        (4384,  0, "Полный список",   "VW_CRIT_USER",   "|AllMethods Y|HasClass|NotObjects|PlPlus|USERCONTEXT 0|", 1, 1, 1),
+        -- ::[USER].[VW_CRIT_USER_2] "Полный список 2"
+        (1,     0, "Полный список 2", "VW_CRIT_USER_2", "|AllMethods Y|HasClass|NotObjects|PlPlus|USERCONTEXT 0|", 0, 1, 1)
+;
 
 INSERT INTO column(view_id, name, width, position, qual, alias, base, is_editable, is_sizeable, is_invisible, logging, ability_perform_operation, target_class_id, reference_type, reference_id)
-VALUES  (4384, "Фамилия Имя Отчество",  "21", "1", "NAME",              "C_FIO",      "STRING", "0", "1", "0", "0", "1", NULL,      NULL, NULL               ),
+VALUES  -- ::[USER].[VW_CRIT_USER] "Полный список"
+        (4384, "Фамилия Имя Отчество",  "21", "1", "NAME",              "C_FIO",      "STRING", "0", "1", "0", "0", "1", NULL,      NULL, NULL               ),
         (4384, "Сетевое имя",           "9",  "2", "USERNAME",          "C_USERNAME", "STRING", "0", "1", "0", "0", "1", NULL,      NULL, NULL               ),
         (4384, "Физическое лицо",       "21", "3", "CL_PRIV_REF.NAME",  "C_NAME_1",   "STRING", "0", "1", "0", "0", "1", "CL_PRIV", 0,    "a1.C_CL_PRIV_REF" ),
-        (4384, "id",                    "4",  "4", "ID",                "C_ID",       "NUMBER", "0", "1", "2", "0", "1", NULL,      NULL, NULL               );
+        (4384, "id",                    "4",  "4", "ID",                "C_ID",       "NUMBER", "0", "1", "2", "0", "1", NULL,      NULL, NULL               )
+;
+
+INSERT INTO row_item(view_id, row_id, name, value)
+VALUES  -- ::[USER].[VW_CRIT_USER] "Полный список"
+        (4384, 0, "ID", "2350467263"), (4384, 0, "C_1", "Тест Тест Тестович"), (4384, 0, "C_2", "TEST"), (4384, 0, "C_3", "22738342"),
+        (4384, 1, "ID", "2350467263"), (4384, 1, "C_1", "Тест Тест Тестович"), (4384, 1, "C_2", "TEST"), (4384, 1, "C_3", "22738342")
+;

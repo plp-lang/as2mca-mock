@@ -11,11 +11,14 @@ use chrono::DateTime;
 
 use crate::{
   config::args::build::{COMMIT_DATE, COMMIT_HASH, COMMIT_TIMESTAMP},
-  domain::entities::settings::Setting,
+  domain::entities::{settings::Setting, view::ViewDataGet},
   error::Error,
   representation::{
     app::AppState,
-    dto::{DebugPipeName, requests, responses},
+    dto::{
+      DebugPipeName, requests,
+      responses::{self, ResponseKind},
+    },
     middlewares::{jsessionid::JSessionId, war_path::WarPath, xml::Xml},
   },
 };
@@ -28,65 +31,49 @@ pub async fn api(
   JSessionId(session_id): JSessionId,
   Xml(request): Xml<requests::Request>,
 ) -> Result<Response<Body>, Error> {
-  let data = match request.body {
+  let body = match request.body {
     requests::RequestKind::SessionInit(_) => {
       let debug_pipe_name = state.session_service.init(&session_id.clone().into()).await?;
-      responses::Response {
-        body: responses::ResponseKind::Session(responses::Session {
-          id: session_id,
-          debug_pipe_name: DebugPipeName::new(debug_pipe_name.to_string()),
-        }),
-      }
+      ResponseKind::Session(responses::Session {
+        id: session_id,
+        debug_pipe_name: DebugPipeName::new(debug_pipe_name.to_string()),
+      })
     }
     requests::RequestKind::Disconnect(requests::Disconnect { session_id }) => {
       state.session_service.deinit(&session_id.into()).await?;
-      responses::Response {
-        body: responses::ResponseKind::Done(responses::Done {}),
-      }
+      ResponseKind::Done(responses::Done {})
     }
     requests::RequestKind::SystemSettingsGet(_) => {
       let body = state.settings_service.get_all().await?;
-      responses::Response {
-        body: responses::ResponseKind::Settings(responses::Settings { body }),
-      }
+      ResponseKind::Settings(responses::Settings { body })
     }
     requests::RequestKind::SystemCoreInfoGet(_) => {
       let dt = DateTime::parse_from_str(COMMIT_DATE, "%Y-%m-%d %H:%M:%S %:z")?;
       let aswar_date = dt.format("%d/%m/%Y %H:%M:%S").to_string();
-      responses::Response {
-        body: responses::ResponseKind::CoreInfo(responses::CoreInfo {
-          auditor: env!("CARGO_PKG_AUTHORS").to_string(),
-          owner: env!("CARGO_PKG_AUTHORS").to_string(),
-          version: env!("CARGO_PKG_VERSION").to_string(),
-          build: COMMIT_TIMESTAMP.to_string(),
-          revision: COMMIT_HASH.to_owned(),
-          as_version: env!("CARGO_PKG_VERSION").to_string(),
-          aswar_date,
-        }),
-      }
-    }
-    requests::RequestKind::SystemServerVersionGet(_) => responses::Response {
-      body: responses::ResponseKind::ServerInfo(responses::ServerInfo {
+      ResponseKind::CoreInfo(responses::CoreInfo {
+        auditor: env!("CARGO_PKG_AUTHORS").to_string(),
+        owner: env!("CARGO_PKG_AUTHORS").to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-      }),
-    },
-    requests::RequestKind::ProtocolInfoGet(_) => responses::Response {
-      body: responses::ResponseKind::ProtocolInfo(responses::ProtocolInfo {
-        version: "9.54".to_string(),
-      }),
-    },
-    requests::RequestKind::AuthenticationURLGet(_) => responses::Response {
-      body: responses::ResponseKind::AuthenticationURL(responses::AuthenticationURL {
-        url: format!("/{war_name}/authbasic"),
-      }),
-    },
-    requests::RequestKind::UserInfoGet(_) => responses::Response {
-      body: responses::ResponseKind::User(responses::User {
-        name: "Тест Тест Тестович".to_owned(),
-        short_name: "TEST".to_owned(),
-        properties: "|ADMIN|CONTEXT|PICKER|PROFILE DEFAULT|SESSION|".to_owned(),
-      }),
-    },
+        build: COMMIT_TIMESTAMP.to_string(),
+        revision: COMMIT_HASH.to_owned(),
+        as_version: env!("CARGO_PKG_VERSION").to_string(),
+        aswar_date,
+      })
+    }
+    requests::RequestKind::SystemServerVersionGet(_) => ResponseKind::ServerInfo(responses::ServerInfo {
+      version: env!("CARGO_PKG_VERSION").to_string(),
+    }),
+    requests::RequestKind::ProtocolInfoGet(_) => ResponseKind::ProtocolInfo(responses::ProtocolInfo {
+      version: "9.54".to_string(),
+    }),
+    requests::RequestKind::AuthenticationURLGet(_) => ResponseKind::AuthenticationURL(responses::AuthenticationURL {
+      url: format!("/{war_name}/authbasic"),
+    }),
+    requests::RequestKind::UserInfoGet(_) => ResponseKind::User(responses::User {
+      name: "Тест Тест Тестович".to_owned(),
+      short_name: "TEST".to_owned(),
+      properties: "|ADMIN|CONTEXT|PICKER|PROFILE DEFAULT|SESSION|".to_owned(),
+    }),
     requests::RequestKind::SystemNetAddressSet(requests::SystemNetAddressSet {
       session_id: _,
       mac_address: _,
@@ -98,159 +85,107 @@ pub async fn api(
       client_ip: _,
       client_user: _,
       module_name: _,
-    }) => responses::Response {
-      body: responses::ResponseKind::Done(responses::Done {}),
-    },
-    requests::RequestKind::NovoAllowedCheck(_) => responses::Response {
-      body: responses::ResponseKind::NovoAllowedCheckResult(responses::NovoAllowedCheckResult {
-        value: "1".to_owned(),
-      }),
-    },
-    requests::RequestKind::SystemUserPrivilegedGet(_) => responses::Response {
-      body: responses::ResponseKind::UserPrivileged(responses::UserPrivileged {
-        is_privileged: "true".to_owned(),
-      }),
-    },
-    requests::RequestKind::UserProfilePropertyGet(_) => responses::Response {
-      body: responses::ResponseKind::UserProfileProperty(responses::UserProfileProperty { value: String::new() }),
-    },
-    requests::RequestKind::SystemOptionEnabledCheck(_) => responses::Response {
-      body: responses::ResponseKind::OptionInfo(responses::OptionInfo {
-        enabled: "true".to_owned(),
-      }),
-    },
+    }) => ResponseKind::Done(responses::Done {}),
+    requests::RequestKind::NovoAllowedCheck(_) => {
+      ResponseKind::NovoAllowedCheckResult(responses::NovoAllowedCheckResult { value: "1".to_owned() })
+    }
+    requests::RequestKind::SystemUserPrivilegedGet(_) => ResponseKind::UserPrivileged(responses::UserPrivileged {
+      is_privileged: "true".to_owned(),
+    }),
+    requests::RequestKind::UserProfilePropertyGet(_) => {
+      ResponseKind::UserProfileProperty(responses::UserProfileProperty { value: String::new() })
+    }
+    requests::RequestKind::SystemOptionEnabledCheck(_) => ResponseKind::OptionInfo(responses::OptionInfo {
+      enabled: "true".to_owned(),
+    }),
     requests::RequestKind::UserBelongsGroupCheck(_)
     | requests::RequestKind::ClassNeedCollectionIDCheck(requests::ClassNeedCollectionIDCheck {
       session_id: _,
       class_id: _,
-    }) => responses::Response {
-      body: responses::ResponseKind::CheckResult(responses::CheckResult { value: "0".to_owned() }),
-    },
+    }) => ResponseKind::CheckResult(responses::CheckResult { value: "0".to_owned() }),
     requests::RequestKind::TypesGet(requests::TypesGet { session_id: _ }) => {
       let body = state.class_service.get_all().await?;
-      responses::Response {
-        body: responses::ResponseKind::Types(responses::Types { body }),
-      }
+      ResponseKind::Types(responses::Types { body })
     }
-    requests::RequestKind::GuidesGroupsGet(_) => responses::Response {
-      body: responses::ResponseKind::GuidesGroups(responses::GuidesGroups {
-        body: vec![responses::GuidesGroup {
-          id: String::new(),
-          name: String::new(),
-        }],
-      }),
-    },
-    requests::RequestKind::GuidesGet(_) => responses::Response {
-      body: responses::ResponseKind::Guides(responses::Guides { body: vec![] }),
-    },
-    requests::RequestKind::UserMenuGet(_) => responses::Response {
-      body: responses::ResponseKind::UserMenu(responses::UserMenu {}),
-    },
+    requests::RequestKind::GuidesGroupsGet(_) => ResponseKind::GuidesGroups(responses::GuidesGroups {
+      body: vec![responses::GuidesGroup {
+        id: String::new(),
+        name: String::new(),
+      }],
+    }),
+    requests::RequestKind::GuidesGet(_) => ResponseKind::Guides(responses::Guides { body: vec![] }),
+    requests::RequestKind::UserMenuGet(_) => ResponseKind::UserMenu(responses::UserMenu {}),
     requests::RequestKind::ClassViewsGet(requests::ClassViewsGet {
       session_id: _,
       class_id,
     }) => {
       let body = state.view_service.get_view_by_class(&class_id).await?;
-      responses::Response {
-        body: responses::ResponseKind::Views(responses::Views { body }),
-      }
+      ResponseKind::Views(responses::Views { body })
     }
-    requests::RequestKind::ClassChildrenGet(_) => responses::Response {
-      body: responses::ResponseKind::ChildClasses(responses::ChildClasses {}),
-    },
-    requests::RequestKind::ClassMethodsGroupsUserGet(_) => responses::Response {
-      body: responses::ResponseKind::MethodsGroups(responses::MethodsGroups {}),
-    },
+    requests::RequestKind::ClassChildrenGet(_) => ResponseKind::ChildClasses(responses::ChildClasses {}),
+    requests::RequestKind::ClassMethodsGroupsUserGet(_) => ResponseKind::MethodsGroups(responses::MethodsGroups {}),
     requests::RequestKind::ClassMethodsGet(requests::ClassMethodsGet {
       session_id: _,
       class_id: _,
-    }) => responses::Response {
-      body: responses::ResponseKind::Methods(responses::Methods { body: vec![] }),
-    },
+    }) => ResponseKind::Methods(responses::Methods { body: vec![] }),
     requests::RequestKind::ViewColumnsGet(requests::ViewColumnsGet { session_id: _, view_id }) => {
       let body = state.view_service.get_columns_by_view_id(&view_id).await?;
-      responses::Response {
-        body: responses::ResponseKind::Columns(responses::Columns { body }),
-      }
+      ResponseKind::Columns(responses::Columns { body })
     }
     requests::RequestKind::ClassStatesGet(requests::ClassStatesGet {
       session_id: _,
       class_id: _,
-    }) => responses::Response {
-      body: responses::ResponseKind::States(responses::States {}),
-    },
+    }) => ResponseKind::States(responses::States {}),
     requests::RequestKind::ClassTransitionsGet(requests::ClassTransitionsGet {
       session_id: _,
       class_id: _,
-    }) => responses::Response {
-      body: responses::ResponseKind::Transitions(responses::Transitions {}),
-    },
+    }) => ResponseKind::Transitions(responses::Transitions {}),
     requests::RequestKind::ViewDataGetCancelable(requests::ViewDataGetCancelable {
       session_id: _,
-      view_short_name: _,
-      class_id: _,
+      view_short_name,
+      class_id,
       hint: _,
       allow_timestamp_milliseconds: _,
-      rows_limit: _,
-    }) => responses::Response {
-      body: responses::ResponseKind::ViewData(responses::ViewData {
-        body: vec![responses::Row {
-          body: vec![
-            responses::RowItem {
-              column_name: "ID".to_string(),
-              value: "2350467263".to_string(),
-            },
-            responses::RowItem {
-              column_name: "C_1".to_string(),
-              value: "Тест Тест Тестович".to_string(),
-            },
-            responses::RowItem {
-              column_name: "C_2".to_string(),
-              value: "TEST".to_string(),
-            },
-            responses::RowItem {
-              column_name: "C_3".to_string(),
-              value: "22738342".to_string(),
-            },
-          ],
-        }],
-      }),
-    },
+      rows_limit,
+    }) => {
+      let body = state
+        .view_service
+        .get_rows(&ViewDataGet {
+          view_short_name: &view_short_name,
+          class_short_name: &class_id,
+          rows_limit,
+        })
+        .await?;
+      ResponseKind::ViewData(responses::ViewData { body })
+    }
     requests::RequestKind::ObjectBackwardReferencesGet(requests::ObjectBackwardReferencesGet {
       session_id: _,
       object_id: _,
       class_id: _,
-    }) => responses::Response {
-      body: responses::ResponseKind::BackwardReferences(responses::BackwardReferences { body: vec![] }),
-    },
+    }) => ResponseKind::BackwardReferences(responses::BackwardReferences { body: vec![] }),
     requests::RequestKind::PipeTextGet(requests::PipeTextGet {
       session_id: _,
       pipe_name: _,
-    }) => responses::Response {
-      body: responses::ResponseKind::PipeText(responses::PipeText {
-        value: "test".to_string(),
-      }),
-    },
+    }) => ResponseKind::PipeText(responses::PipeText {
+      value: "test".to_string(),
+    }),
     requests::RequestKind::SystemSettingGet(requests::SystemSettingGet { session_id: _, name }) => {
       let setting = state
         .settings_service
         .get_one(&name)
         .await?
         .unwrap_or(Setting { name, value: None });
-      responses::Response {
-        body: responses::ResponseKind::Setting(setting),
-      }
+      ResponseKind::Setting(setting)
     }
     requests::RequestKind::DebugTextGet(requests::DebugTextGet {
       session_id: _,
       direction: _,
-    }) => responses::Response {
-      body: responses::ResponseKind::DebugText(responses::DebugText {
-        value: "test".to_string(),
-      }),
-    },
+    }) => ResponseKind::DebugText(responses::DebugText {
+      value: "test".to_string(),
+    }),
   };
 
+  let data = responses::Response { body };
   let body = requests::XML_HEADER.to_owned() + &quick_xml::se::to_string(&data)?;
 
   let mut headers = HeaderMap::new();
