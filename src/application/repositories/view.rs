@@ -85,11 +85,11 @@ impl ViewRepository for SqliteViewRepository {
     let raw_rows = sqlx::query_as::<_, RawRow>(
       "
         WITH target_view AS (
-            SELECT v.id AS view_id
+            SELECT COALESCE(v.extension_id, v.id) AS view_id
             FROM view v
             JOIN class c ON c.id = v.class_id
             WHERE v.short_name = $1
-            AND c.class_id = $2
+              AND c.class_id = $2
         ),
         limited_row_ids AS (
             SELECT DISTINCT ri.row_id
@@ -101,9 +101,9 @@ impl ViewRepository for SqliteViewRepository {
         SELECT ri.row_id, ri.name, ri.value
         FROM row_item ri
         WHERE ri.view_id = (SELECT view_id FROM target_view)
-        AND ri.row_id IN (SELECT row_id FROM limited_row_ids)
+          AND ri.row_id IN (SELECT row_id FROM limited_row_ids)
         ORDER BY ri.row_id, ri.name
-        ",
+      ",
     )
     .bind(view_data_get.view_short_name)
     .bind(view_data_get.class_short_name)
@@ -118,7 +118,9 @@ impl ViewRepository for SqliteViewRepository {
       match current_row_id {
         Some(id) if id == raw.row_id => {
           let RawRow { name, value, .. } = raw;
-          rows.last_mut().unwrap().row_items.push(RowItem { name, value });
+          if let Some(last_row) = rows.last_mut() {
+            last_row.row_items.push(RowItem { name, value });
+          }
         }
         _ => {
           let RawRow { row_id, name, value } = raw;
@@ -129,7 +131,6 @@ impl ViewRepository for SqliteViewRepository {
         }
       }
     }
-
     Ok(rows)
   }
 }
