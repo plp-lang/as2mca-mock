@@ -28,11 +28,17 @@ pub struct View {
   #[serde(rename = "@Distance")]
   pub distance: u32,
 
+  #[serde(rename = "@SourceID", skip_serializing_if = "Option::is_none")]
+  pub source_id: Option<ViewId>,
+
   #[serde(rename = "@FilterMethodShortName")]
   pub filter_method_short_name: Option<String>,
 
   #[serde(rename = "@FilterMethodProperties")]
   pub filter_method_properties: Option<String>,
+
+  #[serde(rename = "@ExtensionID", skip_serializing_if = "Option::is_none")]
+  pub extension_id: Option<ViewId>,
 
   #[serde(rename = "@ObjectRights")]
   pub object_rights: u32,
