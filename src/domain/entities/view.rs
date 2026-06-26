@@ -188,6 +188,7 @@ pub struct ViewDataGet<'a> {
   pub view_short_name: &'a str,
   pub class_short_name: &'a str,
   pub rows_limit: i64,
+  pub object_id: Option<ObjectID>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -206,7 +207,55 @@ pub struct RowItem {
 
 #[derive(Debug, Clone, FromRow)]
 pub struct RawRow {
-  pub row_id: i64,
+  pub object_id: ObjectID,
   pub name: String,
   pub value: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ObjectID(pub i64);
+
+impl Serialize for ObjectID {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    serializer.serialize_str(&self.0.to_string())
+  }
+}
+
+impl<'de> Deserialize<'de> for ObjectID {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: Deserializer<'de>,
+  {
+    let s = String::deserialize(deserializer)?;
+    let id = s.parse().map_err(serde::de::Error::custom)?;
+    Ok(Self(id))
+  }
+}
+
+impl Type<Sqlite> for ObjectID {
+  fn type_info() -> <Sqlite as sqlx::Database>::TypeInfo {
+    <i64 as Type<Sqlite>>::type_info()
+  }
+
+  fn compatible(ty: &<Sqlite as sqlx::Database>::TypeInfo) -> bool {
+    <i64 as Type<Sqlite>>::compatible(ty)
+  }
+}
+
+impl<'r> Decode<'r, Sqlite> for ObjectID {
+  fn decode(value: SqliteValueRef<'r>) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    Ok(Self(<i64 as Decode<Sqlite>>::decode(value)?))
+  }
+}
+
+impl<'q> Encode<'q, Sqlite> for ObjectID {
+  fn encode_by_ref(
+    &self,
+    buf: &mut <Sqlite as sqlx::Database>::ArgumentBuffer,
+  ) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
+    <i64 as Encode<'q, Sqlite>>::encode_by_ref(&self.0, buf)
+  }
 }

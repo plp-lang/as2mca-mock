@@ -1,7 +1,7 @@
 use serde::{Deserialize, Deserializer};
 
 use crate::{
-  domain::entities::view::ViewId,
+  domain::entities::view::{ObjectID, ViewId},
   representation::dto::{DebugPipeName, SessionId},
 };
 
@@ -106,8 +106,16 @@ pub struct ViewDataGetCancelable {
   pub hint: String,
   #[serde(rename = "@AllowTimestampMilliseconds")]
   pub allow_timestamp_milliseconds: String,
-  #[serde(rename = "@RowsLimit", deserialize_with = "string_to_i64")]
-  pub rows_limit: i64,
+  #[serde(rename = "@RowsLimit", default, deserialize_with = "optional_string_to_i64")]
+  pub rows_limit: Option<i64>,
+  #[serde(rename = "$value")]
+  pub body: Option<ObjectFilter>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ObjectFilter {
+  #[serde(rename = "@ObjectID")]
+  pub object_id: ObjectID,
 }
 
 #[derive(Debug, Deserialize)]
@@ -306,4 +314,16 @@ where
 {
   let s: String = String::deserialize(deserializer)?;
   s.parse::<i64>().map_err(serde::de::Error::custom)
+}
+
+fn optional_string_to_i64<'de, D>(deserializer: D) -> Result<Option<i64>, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let opt: Option<String> = Option::deserialize(deserializer)?;
+  match opt {
+    None => Ok(None),
+    Some(s) if s.is_empty() => Ok(None),
+    Some(s) => s.parse::<i64>().map(Some).map_err(serde::de::Error::custom),
+  }
 }

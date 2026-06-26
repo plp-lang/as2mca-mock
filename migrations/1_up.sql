@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS column (
 
 CREATE TABLE IF NOT EXISTS row_item (
     id INTEGER PRIMARY KEY,
-    row_id INTEGER NOT NULL,
+    object_id INTEGER NOT NULL,
     view_id INTEGER NOT NULL,
 
     name TEXT NOT NULL,
@@ -139,13 +139,13 @@ VALUES  -- ::[USER].[VW_CRIT_USER] "Полный список"
         (4522,          "Наименование",         25, 2, "NAME",              "C_NAME",       "STRING", 0, 1, 0, "D",     1, NULL,        NULL, NULL                  )
 ;
 
-INSERT INTO row_item(view_id, row_id, name, value)
+INSERT INTO row_item(view_id, object_id, name, value)
 VALUES  -- ::[USER].[VW_CRIT_USER] "Полный список"
-        (4384, 0, "ID", "0"), (4384, 0, "C_1", "Тест Тест Тестович"), (4384, 0, "C_2", "TEST"), (4384, 0, "REF3", "1"),
+        (4384, 1, "ID", "0"), (4384, 1, "C_1", "Тест Тест Тестович"), (4384, 1, "C_2", "TEST"), (4384, 1, "REF3", "1"),
         -- ::[CL_PRIV].[VW_CRIT_CL_PRIV] "Полный список"
-        (3616, 0, "ID", "1"), (3616, 0, "C_1", "Тест Тест Тестович"),
+        (3616, 1, "ID", "1"), (3616, 1, "C_1", "Тест Тест Тестович"),
         -- ::[CL_PRIV].[VW_CRIT_CL_PRIV_EXT] "Полный список (расширение)"
-        (4172642368, 0, "ID", "1"), (4172642368, 0, "C_1", "Тест Тест Тестович"), (4172642368, 0, "C_2", "Расширение"),
+        (4172642368, 1, "ID", "1"), (4172642368, 1, "C_1", "Тест Тест Тестович"), (4172642368, 1, "C_2", "Расширение"),
         -- ::[CL_ORG].[VW_CRIT_CL_ORG] "Полный список"
-        (4522, 0, "ID", "1"), (4522, 0, "C_1", 'ООО "Тест"')
+        (4522, 2, "ID", "1"), (4522, 2, "C_1", 'ООО "Тест"')
 ;

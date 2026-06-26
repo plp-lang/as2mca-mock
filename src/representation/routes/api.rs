@@ -147,13 +147,15 @@ pub async fn api(
       hint: _,
       allow_timestamp_milliseconds: _,
       rows_limit,
+      body,
     }) => {
       let body = state
         .view_service
         .get_rows(&ViewDataGet {
           view_short_name: &view_short_name,
           class_short_name: &class_id,
-          rows_limit,
+          rows_limit: rows_limit.unwrap_or(1),
+          object_id: body.map(|f| f.object_id),
         })
         .await?;
       ResponseKind::ViewData(responses::ViewData { body })

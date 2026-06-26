@@ -3,7 +3,7 @@ use sqlx::SqlitePool;
 
 use crate::{
   domain::{
-    entities::view::{Column, RawRow, Row, RowItem, View, ViewDataGet, ViewId},
+    entities::view::{Column, ObjectID, RawRow, Row, RowItem, View, ViewDataGet, ViewId},
     repositories::view::ViewRepository,
   },
   error::Error,
@@ -84,47 +84,49 @@ impl ViewRepository for SqliteViewRepository {
   async fn get_rows(&self, view_data_get: &ViewDataGet) -> Result<Vec<Row>, Error> {
     let raw_rows = sqlx::query_as::<_, RawRow>(
       "
-        WITH target_view AS (
-            SELECT COALESCE(v.extension_id, v.id) AS view_id
-            FROM view v
-            JOIN class c ON c.id = v.class_id
-            WHERE v.short_name = $1
-              AND c.class_id = $2
-        ),
-        limited_row_ids AS (
-            SELECT DISTINCT ri.row_id
-            FROM row_item ri
-            WHERE ri.view_id = (SELECT view_id FROM target_view)
-            ORDER BY ri.row_id
-            LIMIT $3
-        )
-        SELECT ri.row_id, ri.name, ri.value
-        FROM row_item ri
-        WHERE ri.view_id = (SELECT view_id FROM target_view)
-          AND ri.row_id IN (SELECT row_id FROM limited_row_ids)
-        ORDER BY ri.row_id, ri.name
+      WITH target_view AS (
+          SELECT COALESCE(v.extension_id, v.id) AS view_id
+          FROM view v
+          JOIN class c ON c.id = v.class_id
+          WHERE v.short_name = $1
+            AND c.class_id = $2
+      ),
+      limited_object_ids AS (
+          SELECT DISTINCT ri.object_id
+          FROM row_item ri
+          WHERE ri.view_id = (SELECT view_id FROM target_view)
+            AND ($4 IS NULL OR ri.object_id = $4)
+          ORDER BY ri.object_id
+          LIMIT $3
+      )
+      SELECT ri.object_id, ri.name, ri.value
+      FROM row_item ri
+      WHERE ri.view_id = (SELECT view_id FROM target_view)
+        AND ri.object_id IN (SELECT object_id FROM limited_object_ids)
+      ORDER BY ri.object_id, ri.name
       ",
     )
     .bind(view_data_get.view_short_name)
     .bind(view_data_get.class_short_name)
     .bind(view_data_get.rows_limit)
+    .bind(view_data_get.object_id)
     .fetch_all(&self.db)
     .await?;
 
     let mut rows: Vec<Row> = Vec::new();
-    let mut current_row_id: Option<i64> = None;
+    let mut current_object_id: Option<ObjectID> = None;
 
     for raw in raw_rows {
-      match current_row_id {
-        Some(id) if id == raw.row_id => {
+      match current_object_id {
+        Some(id) if id == raw.object_id => {
           let RawRow { name, value, .. } = raw;
           if let Some(last_row) = rows.last_mut() {
             last_row.row_items.push(RowItem { name, value });
           }
         }
         _ => {
-          let RawRow { row_id, name, value } = raw;
-          current_row_id = Some(row_id);
+          let RawRow { object_id, name, value } = raw;
+          current_object_id = Some(object_id);
           rows.push(Row {
             row_items: vec![RowItem { name, value }],
           });
