@@ -183,6 +183,14 @@ pub async fn api(
     }) => ResponseKind::DebugText(responses::DebugText {
       value: "test".to_string(),
     }),
+    requests::RequestKind::ObjectClassAndArchiveKeyGet(requests::ObjectClassAndArchiveKeyGet {
+      session_id: _,
+      object_id: _,
+      base_class_id,
+    }) => ResponseKind::ObjectClassAndArchiveKey(responses::ObjectClassAndArchiveKey {
+      class_id: base_class_id,
+      archive_key: 1000,
+    }),
   };
 
   let data = responses::Response { body };

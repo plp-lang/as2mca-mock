@@ -19,6 +19,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  ObjectClassAndArchiveKey(ObjectClassAndArchiveKey),
   DebugText(DebugText),
   Setting(Setting),
   PipeText(PipeText),
@@ -50,6 +51,14 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+#[derive(Debug, Serialize)]
+pub struct ObjectClassAndArchiveKey {
+  #[serde(rename = "@ClassID")]
+  pub class_id: String,
+  #[serde(rename = "@ArchiveKey")]
+  pub archive_key: i64,
 }
 
 #[derive(Debug, Serialize)]

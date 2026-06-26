@@ -118,8 +118,7 @@ VALUES  -- ::[USER].[VW_CRIT_USER] "Полный список"
         (3616,          1, "Полный список",                 "VW_CRIT_CL_PRIV",      "|AllMethods Y|HasClass|NotObjects|PlPlus|ShowChild|USERCONTEXT 1|",            1, 1, 1, NULL, 4172642368),
         (4172642368,    1, "Полный список (расширение)",    "VW_CRIT_CL_PRIV_EXT",  "|AllMethods Y|HasClass|NotObjects|PlPlus|ShowChild|USERCONTEXT 1|",            0, 1, 1, 3616, NULL),
         -- ::[CL_PRIV].[VW_CRIT_CL_PRIV] "Полный список"
-        (4522,          2, "Полный список",                 "VW_CRIT_CL_ORG",       "|AllMethods Y|GENERATE_ANSI_JOINS|HasClass|NotObjects|PlPlus|USERCONTEXT 0|",  1, 1, 1, NULL, 710075685),
-        (710075685,     2, "Полный список (расширение)",    "VW_CRIT_CL_ORG_EXT",   "|AllMethods Y|HasClass|NotObjects|PlPlus|USERCONTEXT 0|",                      0, 1, 1, 4522, NULL)
+        (4522,          2, "Полный список",                 "VW_CRIT_CL_ORG",       "|AllMethods Y|GENERATE_ANSI_JOINS|HasClass|NotObjects|PlPlus|USERCONTEXT 0|",  1, 1, 1, NULL, NULL)
 ;
 
 INSERT INTO column(view_id, name, width, position, qual, alias, base, is_editable, is_sizeable, is_invisible, logging, ability_perform_operation, target_class_id, reference_type, reference_id)
@@ -133,15 +132,20 @@ VALUES  -- ::[USER].[VW_CRIT_USER] "Полный список"
         (3616,          "Ф.И.О.",               25, 2, "NAME",              "C_NAME",       "STRING", 0, 1, 0, "D",     1, NULL,        NULL, NULL                  ),
         -- ::[CL_PRIV].[VW_CRIT_CL_PRIV_EXT] "Полный список (расширение)"
         (4172642368,    "ID",                   17, 1, "ID",                "C_ID",         "NUMBER", 0, 1, 2, "0",     1, NULL,        NULL, NULL                  ),
-        (4172642368,    "Ф.И.О.",               25, 2, "NAME",              "C_NAME",       "STRING", 0, 1, 0, "0",    1, NULL,        NULL, NULL                   ),
-        (4172642368,    "Расширение",           25, 3, "EXT",               "C_EXT",        "STRING", 0, 1, 0, "0",    1, NULL,        NULL, NULL                   )
+        (4172642368,    "Ф.И.О.",               25, 2, "NAME",              "C_NAME",       "STRING", 0, 1, 0, "0",     1, NULL,        NULL, NULL                  ),
+        (4172642368,    "Расширение",           25, 3, "EXT",               "C_EXT",        "STRING", 0, 1, 0, "0",     1, NULL,        NULL, NULL                  ),
+        -- ::[CL_ORG].[VW_CRIT_CL_ORG] "Полный список"
+        (4522,          "ID",                   17, 1, "ID",                "C_ID",         "NUMBER", 0, 1, 2, "D",     1, NULL,        NULL, NULL                  ),
+        (4522,          "Наименование",         25, 2, "NAME",              "C_NAME",       "STRING", 0, 1, 0, "D",     1, NULL,        NULL, NULL                  )
 ;
 
 INSERT INTO row_item(view_id, row_id, name, value)
 VALUES  -- ::[USER].[VW_CRIT_USER] "Полный список"
-        (4384, 0, "ID", "0"), (4384, 0, "C_1", "Тест Тест Тестович"), (4384, 0, "C_2", "TEST"), (4384, 0, "C_3", "1"),
+        (4384, 0, "ID", "0"), (4384, 0, "C_1", "Тест Тест Тестович"), (4384, 0, "C_2", "TEST"), (4384, 0, "REF3", "1"),
         -- ::[CL_PRIV].[VW_CRIT_CL_PRIV] "Полный список"
         (3616, 0, "ID", "1"), (3616, 0, "C_1", "Тест Тест Тестович"),
         -- ::[CL_PRIV].[VW_CRIT_CL_PRIV_EXT] "Полный список (расширение)"
-        (4172642368, 0, "ID", "1"), (4172642368, 0, "C_1", "Тест Тест Тестович"), (4172642368, 0, "C_2", "Расширение")
+        (4172642368, 0, "ID", "1"), (4172642368, 0, "C_1", "Тест Тест Тестович"), (4172642368, 0, "C_2", "Расширение"),
+        -- ::[CL_ORG].[VW_CRIT_CL_ORG] "Полный список"
+        (4522, 0, "ID", "1"), (4522, 0, "C_1", 'ООО "Тест"')
 ;

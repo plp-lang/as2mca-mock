@@ -15,6 +15,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  ObjectClassAndArchiveKeyGet(ObjectClassAndArchiveKeyGet),
   DebugTextGet(DebugTextGet),
   SystemSettingGet(SystemSettingGet),
   PipeTextGet(PipeTextGet),
@@ -47,6 +48,16 @@ pub enum RequestKind {
   SystemSettingsGet(SystemSettingsGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
   SystemServerVersionGet(SystemServerVersionGet),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ObjectClassAndArchiveKeyGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@ObjectID", deserialize_with = "string_to_i64")]
+  pub object_id: i64,
+  #[serde(rename = "@BaseClassID")]
+  pub base_class_id: String,
 }
 
 #[derive(Debug, Deserialize)]
