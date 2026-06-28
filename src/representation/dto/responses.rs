@@ -213,7 +213,7 @@ pub struct CheckResult {
 #[derive(Debug, Serialize)]
 pub struct OptionInfo {
   #[serde(rename = "@Enabled")]
-  pub enabled: String,
+  pub enabled: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -226,7 +226,7 @@ pub struct UserProfileProperty {
 #[derive(Debug, Serialize, Clone)]
 pub struct UserPrivileged {
   #[serde(rename = "@IsPrivileged")]
-  pub is_privileged: String,
+  pub is_privileged: bool,
 }
 
 #[derive(Debug, Serialize, Clone)]

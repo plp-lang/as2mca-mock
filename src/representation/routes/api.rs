@@ -89,15 +89,15 @@ pub async fn api(
     requests::RequestKind::NovoAllowedCheck(_) => {
       ResponseKind::NovoAllowedCheckResult(responses::NovoAllowedCheckResult { value: "1".to_owned() })
     }
-    requests::RequestKind::SystemUserPrivilegedGet(_) => ResponseKind::UserPrivileged(responses::UserPrivileged {
-      is_privileged: "true".to_owned(),
-    }),
+    requests::RequestKind::SystemUserPrivilegedGet(_) => {
+      ResponseKind::UserPrivileged(responses::UserPrivileged { is_privileged: true })
+    }
     requests::RequestKind::UserProfilePropertyGet(_) => {
       ResponseKind::UserProfileProperty(responses::UserProfileProperty { value: String::new() })
     }
-    requests::RequestKind::SystemOptionEnabledCheck(_) => ResponseKind::OptionInfo(responses::OptionInfo {
-      enabled: "true".to_owned(),
-    }),
+    requests::RequestKind::SystemOptionEnabledCheck(_) => {
+      ResponseKind::OptionInfo(responses::OptionInfo { enabled: true })
+    }
     requests::RequestKind::UserBelongsGroupCheck(_)
     | requests::RequestKind::ClassNeedCollectionIDCheck(requests::ClassNeedCollectionIDCheck {
       session_id: _,
