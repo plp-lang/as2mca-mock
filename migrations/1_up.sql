@@ -23,11 +23,10 @@ CREATE TABLE IF NOT EXISTS class (
     base_class_id TEXT NOT NULL,
     entity_id TEXT NOT NULL,
     menu_caption TEXT NOT NULL,
-    class_interface TEXT NOT NULL,
-    flags TEXT NOT NULL,
-
     is_kernel_type INTEGER NOT NULL DEFAULT 0 CHECK (is_kernel_type IN (0, 1)),
+    class_interface TEXT NOT NULL,
     is_accessible INTEGER NOT NULL DEFAULT 0 CHECK (is_accessible IN (0, 1)),
+    flags TEXT NOT NULL,
 
     pad_length INTEGER,
     data_size INTEGER,
@@ -41,21 +40,20 @@ CREATE TABLE IF NOT EXISTS view (
 
     name TEXT NOT NULL,
     short_name TEXT NOT NULL,
+    is_default INTEGER NOT NULL DEFAULT 0 CHECK (is_default IN (0, 1)),
     properties TEXT NOT NULL,
     distance INTEGER NOT NULL DEFAULT 0,
     object_rights INTEGER NOT NULL DEFAULT 0,
-
-    is_default INTEGER NOT NULL DEFAULT 0 CHECK (is_default IN (0, 1)),
     to_printer INTEGER NOT NULL DEFAULT 0 CHECK (to_printer IN (0, 1)),
     to_file INTEGER NOT NULL DEFAULT 0 CHECK (to_file IN (0, 1)),
 
-    cell_style_script TEXT,
-    filter_method_short_name TEXT,
-    filter_method_properties TEXT,
-    hints TEXT,
     order_by TEXT,
+    hints TEXT,
+    cell_style_script TEXT,
     source_id INTEGER,
     extension_id INTEGER,
+    filter_method_short_name TEXT,
+    filter_method_properties TEXT,
 
     FOREIGN KEY(class_id) REFERENCES class(id)
     FOREIGN KEY(source_id) REFERENCES view(id)
@@ -65,26 +63,23 @@ CREATE TABLE IF NOT EXISTS view (
 CREATE TABLE IF NOT EXISTS column (
     id INTEGER PRIMARY KEY,
     view_id INTEGER NOT NULL,
-    alias TEXT NOT NULL,
 
     name TEXT NOT NULL,
     width INTEGER NOT NULL,
+    align INTEGER NOT NULL DEFAULT 0 CHECK (align IN (0, 1, 2)),
     position INTEGER NOT NULL,
     qual TEXT NOT NULL,
+    alias TEXT NOT NULL,
     base TEXT NOT NULL,
-
-    align INTEGER NOT NULL DEFAULT 0 CHECK (align IN (0, 1, 2)),
-    is_invisible INTEGER NOT NULL DEFAULT 0 CHECK (is_invisible IN (0, 2)),
-
     is_sizeable INTEGER NOT NULL DEFAULT 0 CHECK (is_sizeable IN (0, 1)),
     is_cell_style INTEGER NOT NULL DEFAULT 0 CHECK (is_cell_style IN (0, 1)),
+    is_invisible INTEGER NOT NULL DEFAULT 0 CHECK (is_invisible IN (0, 2)),
+    ability_perform_operation INTEGER NOT NULL DEFAULT 0 CHECK (reference_type IN (0, 1)),
 
-    reference_type INTEGER CHECK (reference_type IN (0, 1)),
     is_editable INTEGER CHECK (reference_type IN (0, 1)),
-    ability_perform_operation INTEGER CHECK (reference_type IN (0, 1)),
-
-    target_class_id TEXT,
     reference_id TEXT,
+    target_class_id TEXT,
+    reference_type INTEGER CHECK (reference_type IN (0, 1)),
     logging TEXT CHECK (reference_type IN ("0", "D")),
 
     FOREIGN KEY(view_id) REFERENCES view(id)
@@ -121,22 +116,22 @@ VALUES  -- ::[USER].[VW_CRIT_USER] "Полный список"
         (4522,          2, "Полный список",                 "VW_CRIT_CL_ORG",       "|AllMethods Y|GENERATE_ANSI_JOINS|HasClass|NotObjects|PlPlus|USERCONTEXT 0|",  1, 1, 1, NULL, NULL)
 ;
 
-INSERT INTO column(view_id, name, width, position, qual, alias, base, is_editable, is_sizeable, is_invisible, logging, ability_perform_operation, target_class_id, reference_type, reference_id)
+INSERT INTO column(view_id, name, width, position, qual, alias, base, is_sizeable, is_invisible, logging, ability_perform_operation, target_class_id, reference_type, reference_id)
 VALUES  -- ::[USER].[VW_CRIT_USER] "Полный список"
-        (4384,          "Фамилия Имя Отчество", 21, 1, "NAME",              "C_FIO",        "STRING", 0, 1, 0, "0",     1, NULL,        NULL, NULL                  ),
-        (4384,          "Сетевое имя",          9,  2, "USERNAME",          "C_USERNAME",   "STRING", 0, 1, 0, "0",     1, NULL,        NULL, NULL                  ),
-        (4384,          "Физическое лицо",      21, 3, "CL_PRIV_REF.NAME",  "C_NAME_1",     "STRING", 0, 1, 0, "0",     1, "CL_PRIV",   0,    "a1.C_CL_PRIV_REF"    ),
-        (4384,          "id",                   4,  4, "ID",                "C_ID",         "NUMBER", 0, 1, 2, "0",     1, NULL,        NULL, NULL                  ),
+        (4384,          "Фамилия Имя Отчество", 21, 1, "NAME",              "C_FIO",        "STRING", 1, 0, "0",     1, NULL,        NULL, NULL                  ),
+        (4384,          "Сетевое имя",          9,  2, "USERNAME",          "C_USERNAME",   "STRING", 1, 0, "0",     1, NULL,        NULL, NULL                  ),
+        (4384,          "Физическое лицо",      21, 3, "CL_PRIV_REF.NAME",  "C_NAME_1",     "STRING", 1, 0, "0",     1, "CL_PRIV",   0,    "a1.C_CL_PRIV_REF"    ),
+        (4384,          "id",                   4,  4, "ID",                "C_ID",         "NUMBER", 1, 2, "0",     1, NULL,        NULL, NULL                  ),
         -- ::[CL_PRIV].[VW_CRIT_CL_PRIV] "Полный список"
-        (3616,          "ID",                   17, 1, "ID",                "C_ID",         "NUMBER", 0, 1, 2, "D",     1, NULL,        NULL, NULL                  ),
-        (3616,          "Ф.И.О.",               25, 2, "NAME",              "C_NAME",       "STRING", 0, 1, 0, "D",     1, NULL,        NULL, NULL                  ),
+        (3616,          "ID",                   17, 1, "ID",                "C_ID",         "NUMBER", 1, 2, "D",     1, NULL,        NULL, NULL                  ),
+        (3616,          "Ф.И.О.",               25, 2, "NAME",              "C_NAME",       "STRING", 1, 0, "D",     1, NULL,        NULL, NULL                  ),
         -- ::[CL_PRIV].[VW_CRIT_CL_PRIV_EXT] "Полный список (расширение)"
-        (4172642368,    "ID",                   17, 1, "ID",                "C_ID",         "NUMBER", 0, 1, 2, "0",     1, NULL,        NULL, NULL                  ),
-        (4172642368,    "Ф.И.О.",               25, 2, "NAME",              "C_NAME",       "STRING", 0, 1, 0, "0",     1, NULL,        NULL, NULL                  ),
-        (4172642368,    "Расширение",           25, 3, "EXT",               "C_EXT",        "STRING", 0, 1, 0, "0",     1, NULL,        NULL, NULL                  ),
+        (4172642368,    "ID",                   17, 1, "ID",                "C_ID",         "NUMBER", 1, 2, "0",     1, NULL,        NULL, NULL                  ),
+        (4172642368,    "Ф.И.О.",               25, 2, "NAME",              "C_NAME",       "STRING", 1, 0, "0",     1, NULL,        NULL, NULL                  ),
+        (4172642368,    "Расширение",           25, 3, "EXT",               "C_EXT",        "STRING", 1, 0, "0",     1, NULL,        NULL, NULL                  ),
         -- ::[CL_ORG].[VW_CRIT_CL_ORG] "Полный список"
-        (4522,          "ID",                   17, 1, "ID",                "C_ID",         "NUMBER", 0, 1, 2, "D",     1, NULL,        NULL, NULL                  ),
-        (4522,          "Наименование",         25, 2, "NAME",              "C_NAME",       "STRING", 0, 1, 0, "D",     1, NULL,        NULL, NULL                  )
+        (4522,          "ID",                   17, 1, "ID",                "C_ID",         "NUMBER", 1, 2, "D",     1, NULL,        NULL, NULL                  ),
+        (4522,          "Наименование",         25, 2, "NAME",              "C_NAME",       "STRING", 1, 0, "D",     1, NULL,        NULL, NULL                  )
 ;
 
 INSERT INTO row_item(view_id, object_id, name, value)

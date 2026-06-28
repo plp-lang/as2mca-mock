@@ -3,57 +3,41 @@ use sqlx::prelude::FromRow;
 use sqlx::sqlite::SqliteValueRef;
 use sqlx::{Decode, Encode, Sqlite, Type};
 
-use crate::domain::entities::{bool_as_str, option_bool_as_str};
-
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct View {
   #[serde(rename = "@ID")]
   pub id: ViewId,
-
   #[serde(rename = "@Name")]
   pub name: String,
-
   #[serde(rename = "@ShortName")]
   pub short_name: String,
-
-  #[serde(rename = "@IsDefault", with = "bool_as_str")]
-  pub is_default: bool,
-
-  #[serde(rename = "@CellStyleScript")]
-  pub cell_style_script: Option<String>,
-
+  #[serde(rename = "@IsDefault")]
+  pub is_default: u8,
   #[serde(rename = "@Properties")]
   pub properties: String,
-
   #[serde(rename = "@Distance")]
-  pub distance: u32,
+  pub distance: u8,
+  #[serde(rename = "@ObjectRights")]
+  pub object_rights: u8,
+  #[serde(rename = "@ToPrinter")]
+  pub to_printer: u8,
+  #[serde(rename = "@ToFile")]
+  pub to_file: u8,
 
+  #[serde(rename = "@OrderBy", skip_serializing_if = "Option::is_none")]
+  pub order_by: Option<String>,
+  #[serde(rename = "@Hints", skip_serializing_if = "Option::is_none")]
+  pub hints: Option<String>,
+  #[serde(rename = "@CellStyleScript", skip_serializing_if = "Option::is_none")]
+  pub cell_style_script: Option<String>,
   #[serde(rename = "@SourceID", skip_serializing_if = "Option::is_none")]
   pub source_id: Option<ViewId>,
-
-  #[serde(rename = "@FilterMethodShortName")]
-  pub filter_method_short_name: Option<String>,
-
-  #[serde(rename = "@FilterMethodProperties")]
-  pub filter_method_properties: Option<String>,
-
   #[serde(rename = "@ExtensionID", skip_serializing_if = "Option::is_none")]
   pub extension_id: Option<ViewId>,
-
-  #[serde(rename = "@ObjectRights")]
-  pub object_rights: u32,
-
-  #[serde(rename = "@ToPrinter", with = "bool_as_str")]
-  pub to_printer: bool,
-
-  #[serde(rename = "@ToFile", with = "bool_as_str")]
-  pub to_file: bool,
-
-  #[serde(rename = "@Hints")]
-  pub hints: Option<String>,
-
-  #[serde(rename = "@OrderBy")]
-  pub order_by: Option<String>,
+  #[serde(rename = "@FilterMethodShortName", skip_serializing_if = "Option::is_none")]
+  pub filter_method_short_name: Option<String>,
+  #[serde(rename = "@FilterMethodProperties", skip_serializing_if = "Option::is_none")]
+  pub filter_method_properties: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -108,57 +92,37 @@ impl<'q> Encode<'q, Sqlite> for ViewId {
 pub struct Column {
   #[serde(rename = "@Name")]
   pub name: String,
-
   #[serde(rename = "@Width")]
   pub width: u32,
-
-  /// TODO: Left = 0, Center = 1, Right = 2
   #[serde(rename = "@Align")]
-  pub align: u8,
-
+  pub align: u8, // TODO: Left = 0, Center = 1, Right = 2
   #[serde(rename = "@Position")]
   pub position: u32,
-
   #[serde(rename = "@Qual")]
   pub qual: String,
-
   #[serde(rename = "@Alias")]
   pub alias: String,
-
   #[serde(rename = "@Base")]
   pub base: ColumnBase,
-
-  #[serde(rename = "@IsEditable", with = "option_bool_as_str")]
-  pub is_editable: Option<bool>,
-
-  #[serde(rename = "@IsSizeable", with = "bool_as_str")]
-  pub is_sizeable: bool,
-
-  #[serde(rename = "@IsCellStyle", with = "bool_as_str")]
-  pub is_cell_style: bool,
-
-  /// TODO: Visible = 0, Hidden = 2
+  #[serde(rename = "@IsSizeable")]
+  pub is_sizeable: u8,
+  #[serde(rename = "@IsCellStyle")]
+  pub is_cell_style: u8,
   #[serde(rename = "@IsInvisible")]
-  pub is_invisible: u8,
+  pub is_invisible: u8, // TODO: Visible = 0, Hidden = 2
+  #[serde(rename = "@AbilityPerformOperation")]
+  pub ability_perform_operation: bool,
 
-  #[serde(rename = "@TargetClassID", skip_serializing_if = "Option::is_none")]
-  pub target_class_id: Option<String>,
-
-  #[serde(
-    rename = "@ReferenceType",
-    with = "option_bool_as_str",
-    skip_serializing_if = "Option::is_none"
-  )]
-  pub reference_type: Option<bool>,
-
-  #[serde(rename = "@Logging", skip_serializing_if = "Option::is_none")]
-  pub logging: Option<Logging>,
-
-  #[serde(rename = "@AbilityPerformOperation", skip_serializing_if = "Option::is_none")]
-  pub ability_perform_operation: Option<bool>,
-
+  #[serde(rename = "@IsEditable", skip_serializing_if = "Option::is_none")]
+  pub is_editable: Option<u8>,
   #[serde(rename = "@ReferenceID", skip_serializing_if = "Option::is_none")]
   pub reference_id: Option<String>,
+  #[serde(rename = "@TargetClassID", skip_serializing_if = "Option::is_none")]
+  pub target_class_id: Option<String>,
+  #[serde(rename = "@ReferenceType", skip_serializing_if = "Option::is_none")]
+  pub reference_type: Option<u8>,
+  #[serde(rename = "@Logging", skip_serializing_if = "Option::is_none")]
+  pub logging: Option<Logging>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
