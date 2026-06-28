@@ -40,7 +40,7 @@ hex = "0.4.3"
 clap = { version = "4.6.1", features = ["derive", "env"] }
 serde = { version = "1.0.228" }
 async-trait = "0.1.89"
-log = { version = "0.4.32", features = ["serde"] }
+log = { version = "0.4.33", features = ["serde"] }
 tokio = { version = "1.52.3", features = ["full"] }
 tracing = { version = "0.1.44", features = ["attributes"] }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
