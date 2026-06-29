@@ -2,7 +2,7 @@ use serde::{Deserialize, Deserializer};
 
 use crate::{
   domain::entities::{
-    method::MethodId,
+    method::{FormId, MethodId},
     view::{ObjectID, ViewId},
   },
   representation::dto::{DebugPipeName, SessionId},
@@ -62,7 +62,7 @@ pub struct MethodControlsGet {
   #[serde(rename = "@SessionID")]
   pub session_id: SessionId,
   #[serde(rename = "@FormID")]
-  pub form_id: MethodId,
+  pub form_id: FormId,
 }
 
 /// Запрос списка параметров операции

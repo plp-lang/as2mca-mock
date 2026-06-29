@@ -2,7 +2,10 @@ use async_trait::async_trait;
 use sqlx::SqlitePool;
 
 use crate::{
-  domain::{entities::method::Method, repositories::method::MethodRepository},
+  domain::{
+    entities::method::{Control, FormId, Method, MethodId, MethodParameter},
+    repositories::method::MethodRepository,
+  },
   error::Error,
 };
 
@@ -19,7 +22,7 @@ impl SqliteMethodRepository {
 
 #[async_trait]
 impl MethodRepository for SqliteMethodRepository {
-  async fn get_all(&self, class_short_name: &str) -> Result<Vec<Method>, Error> {
+  async fn get_methods(&self, class_short_name: &str) -> Result<Vec<Method>, Error> {
     let methods = sqlx::query_as::<_, Method>(
       "
         SELECT
@@ -45,5 +48,54 @@ impl MethodRepository for SqliteMethodRepository {
     .fetch_all(&self.db)
     .await?;
     Ok(methods)
+  }
+
+  async fn get_method_parameters(&self, method_id: &MethodId) -> Result<Vec<MethodParameter>, Error> {
+    let parameters = sqlx::query_as::<_, MethodParameter>(
+      "
+        SELECT
+          short_name
+          , class_id
+          , position
+          , reference_type
+          , direction
+          , default_value
+        FROM method_parameter
+        WHERE method_id = $1",
+    )
+    .bind(method_id)
+    .fetch_all(&self.db)
+    .await?;
+    Ok(parameters)
+  }
+
+  async fn get_method_controls(&self, form_id: &FormId) -> Result<Vec<Control>, Error> {
+    let controls = sqlx::query_as::<_, Control>(
+      "
+        SELECT
+          id
+          , method_id
+          , qualifier
+          , control
+          , caption
+          , top
+          , left
+          , height
+          , width
+          , tab_index
+          , position
+          , validate_name
+          , parent_id
+          , class_id
+          , depend
+          , properties
+          , tips
+        FROM method_control
+        WHERE method_id = $1",
+    )
+    .bind(form_id)
+    .fetch_all(&self.db)
+    .await?;
+    Ok(controls)
   }
 }

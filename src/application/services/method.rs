@@ -1,7 +1,11 @@
 use async_trait::async_trait;
 
 use crate::{
-  domain::{entities::method::Method, repositories::method::MethodRepository, services::method::MethodService},
+  domain::{
+    entities::method::{Control, FormId, Method, MethodId, MethodParameter},
+    repositories::method::MethodRepository,
+    services::method::MethodService,
+  },
   error::Error,
 };
 
@@ -17,7 +21,15 @@ impl<R: MethodRepository> MethodServiceImpl<R> {
 
 #[async_trait]
 impl<R: MethodRepository + Send + Sync> MethodService for MethodServiceImpl<R> {
-  async fn get_all(&self, class_short_name: &str) -> Result<Vec<Method>, Error> {
-    self.repo.get_all(class_short_name).await
+  async fn get_methods(&self, class_short_name: &str) -> Result<Vec<Method>, Error> {
+    self.repo.get_methods(class_short_name).await
+  }
+
+  async fn get_method_parameters(&self, method_id: &MethodId) -> Result<Vec<MethodParameter>, Error> {
+    self.repo.get_method_parameters(method_id).await
+  }
+
+  async fn get_method_controls(&self, form_id: &FormId) -> Result<Vec<Control>, Error> {
+    self.repo.get_method_controls(form_id).await
   }
 }
