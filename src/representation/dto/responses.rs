@@ -20,6 +20,8 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  Controls(Controls),
+  MethodParameters(MethodParameters),
   MethodFrame(MethodFrame),
   ObjectClassAndArchiveKey(ObjectClassAndArchiveKey),
   DebugText(DebugText),
@@ -53,6 +55,88 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+/// Спиок элементов на форме
+#[derive(Debug, Serialize)]
+pub struct Controls {
+  #[serde(default, rename = "$value")]
+  pub controls: Vec<Control>,
+}
+
+/// Элемент на форме
+#[derive(Debug, Serialize)]
+pub struct Control {
+  #[serde(rename = "@ID")]
+  pub id: i64,
+  #[serde(rename = "@MethodID")]
+  pub method_id: i64,
+  #[serde(rename = "@Qualifier")]
+  pub qualifier: String,
+  #[serde(rename = "@Control")]
+  pub control: ControlType,
+  #[serde(rename = "@Caption")]
+  pub caption: String,
+  #[serde(rename = "@Top")]
+  pub top: u32,
+  #[serde(rename = "@Left")]
+  pub left: u32,
+  #[serde(rename = "@Height")]
+  pub height: u32,
+  #[serde(rename = "@Width")]
+  pub width: u32,
+  #[serde(rename = "@TabIndex")]
+  pub tab_index: u32,
+  #[serde(rename = "@Position")]
+  pub position: u32,
+  #[serde(rename = "@ValidateName")]
+  pub validate_name: String,
+  #[serde(rename = "@ClassID", skip_serializing_if = "Option::is_none")]
+  pub class_id: Option<String>,
+  #[serde(rename = "@Depend", skip_serializing_if = "Option::is_none")]
+  pub depend: Option<i64>,
+  #[serde(rename = "@ParentID", skip_serializing_if = "Option::is_none")]
+  pub parent_id: Option<i64>,
+  #[serde(rename = "@Properties", skip_serializing_if = "Option::is_none")]
+  pub properties: Option<String>,
+  #[serde(rename = "@Tips", skip_serializing_if = "Option::is_none")]
+  pub tips: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ControlType {
+  Form,
+  Label,
+  Text,
+  Object,
+  Check,
+  Button,
+}
+
+/// Спиок входных параметров операции
+#[derive(Debug, Serialize)]
+pub struct MethodParameters {
+  #[serde(default, rename = "$value")]
+  pub parameters: Vec<MethodParameter>,
+}
+
+/// Описание входного параметра операции
+#[derive(Debug, Serialize)]
+pub struct MethodParameter {
+  #[serde(rename = "@ShortName")]
+  pub short_name: String,
+  #[serde(rename = "@ClassID")]
+  pub class_id: String,
+  #[serde(rename = "@Position")]
+  pub position: u32,
+  #[serde(rename = "@ReferenceType")]
+  pub reference_type: String,
+  #[serde(rename = "@Direction")]
+  pub direction: String,
+
+  #[serde(rename = "@DefaultValue", skip_serializing_if = "Option::is_none")]
+  pub default_value: Option<String>,
 }
 
 // TODO

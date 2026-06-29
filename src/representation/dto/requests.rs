@@ -18,6 +18,8 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  MethodControlsGet(MethodControlsGet),
+  MethodParametersGet(MethodParametersGet),
   MethodBegin(MethodBegin),
   ObjectClassAndArchiveKeyGet(ObjectClassAndArchiveKeyGet),
   DebugTextGet(DebugTextGet),
@@ -54,7 +56,25 @@ pub enum RequestKind {
   SystemServerVersionGet(SystemServerVersionGet),
 }
 
-/// Выполнить операцию
+/// Запрос списка элементов формы операции
+#[derive(Debug, Deserialize)]
+pub struct MethodControlsGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@FormID")]
+  pub form_id: MethodId,
+}
+
+/// Запрос списка параметров операции
+#[derive(Debug, Deserialize)]
+pub struct MethodParametersGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@MethodID")]
+  pub method_id: MethodId,
+}
+
+/// Запрос на подготовку операции к выполнению
 #[derive(Debug, Deserialize)]
 pub struct MethodBegin {
   #[serde(rename = "@SessionID")]
