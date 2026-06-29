@@ -17,7 +17,7 @@ use crate::{
     app::AppState,
     dto::{
       DebugPipeName, requests,
-      responses::{self, ResponseKind},
+      responses::{self, MethodFrame, ResponseKind},
     },
     middlewares::{jsessionid::JSessionId, war_path::WarPath, xml::Xml},
   },
@@ -196,6 +196,10 @@ pub async fn api(
       class_id: base_class_id,
       archive_key: 1000,
     }),
+    requests::RequestKind::MethodBegin(requests::MethodBegin {
+      session_id: _,
+      method_id: _,
+    }) => ResponseKind::MethodFrame(MethodFrame { frame_id: 0 }),
   };
 
   let data = responses::Response { body };

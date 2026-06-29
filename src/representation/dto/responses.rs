@@ -20,6 +20,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  MethodFrame(MethodFrame),
   ObjectClassAndArchiveKey(ObjectClassAndArchiveKey),
   DebugText(DebugText),
   Setting(Setting),
@@ -52,6 +53,13 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+// TODO
+#[derive(Debug, Serialize)]
+pub struct MethodFrame {
+  #[serde(rename = "@FrameID")]
+  pub frame_id: i64,
 }
 
 #[derive(Debug, Serialize)]

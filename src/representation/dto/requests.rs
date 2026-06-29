@@ -1,7 +1,10 @@
 use serde::{Deserialize, Deserializer};
 
 use crate::{
-  domain::entities::view::{ObjectID, ViewId},
+  domain::entities::{
+    method::MethodId,
+    view::{ObjectID, ViewId},
+  },
   representation::dto::{DebugPipeName, SessionId},
 };
 
@@ -15,6 +18,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  MethodBegin(MethodBegin),
   ObjectClassAndArchiveKeyGet(ObjectClassAndArchiveKeyGet),
   DebugTextGet(DebugTextGet),
   SystemSettingGet(SystemSettingGet),
@@ -48,6 +52,15 @@ pub enum RequestKind {
   SystemSettingsGet(SystemSettingsGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
   SystemServerVersionGet(SystemServerVersionGet),
+}
+
+/// Выполнить операцию
+#[derive(Debug, Deserialize)]
+pub struct MethodBegin {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@MethodID")]
+  pub method_id: MethodId,
 }
 
 #[derive(Debug, Deserialize)]
