@@ -4,6 +4,7 @@ use crate::{
   domain::entities::{
     self,
     class::Class,
+    method::Method,
     view::{Column, Row, View},
   },
   representation::dto::{DebugPipeName, SessionId},
@@ -113,32 +114,6 @@ pub struct Columns {
 pub struct Methods {
   #[serde(default, rename = "$value")]
   pub body: Vec<Method>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct Method {
-  #[serde(rename = "@ID")]
-  pub id: String,
-  #[serde(rename = "@Name")]
-  pub name: String,
-  #[serde(rename = "@ShortName")]
-  pub short_name: String,
-  #[serde(rename = "@Type")]
-  pub r#type: String,
-  #[serde(rename = "@FormClassID")]
-  pub form_class_id: String,
-  #[serde(rename = "@Properties")]
-  pub properties: String,
-  #[serde(rename = "@ScriptID")]
-  pub script_id: String,
-  #[serde(rename = "@ResultClassID")]
-  pub result_class_id: String,
-  #[serde(rename = "@UserDriven")]
-  pub user_driven: String,
-  #[serde(rename = "@Distance")]
-  pub distance: String,
-  #[serde(rename = "@CallableShortName")]
-  pub callable_short_name: String,
 }
 
 #[derive(Debug, Serialize)]

@@ -126,8 +126,11 @@ pub async fn api(
     requests::RequestKind::ClassMethodsGroupsUserGet(_) => ResponseKind::MethodsGroups(responses::MethodsGroups {}),
     requests::RequestKind::ClassMethodsGet(requests::ClassMethodsGet {
       session_id: _,
-      class_id: _,
-    }) => ResponseKind::Methods(responses::Methods { body: vec![] }),
+      class_id,
+    }) => {
+      let body = state.method_service.get_all(&class_id).await?;
+      ResponseKind::Methods(responses::Methods { body })
+    }
     requests::RequestKind::ViewColumnsGet(requests::ViewColumnsGet { session_id: _, view_id }) => {
       let body = state.view_service.get_columns_by_view_id(&view_id).await?;
       ResponseKind::Columns(responses::Columns { body })

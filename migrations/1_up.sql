@@ -34,6 +34,28 @@ CREATE TABLE IF NOT EXISTS class (
     properties TEXT
 );
 
+CREATE TABLE IF NOT EXISTS method (
+    id INTEGER PRIMARY KEY,
+    class_id INTEGER NOT NULL,
+
+    name TEXT NOT NULL,
+    short_name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    form_class_id TEXT NOT NULL,
+    properties TEXT NOT NULL,
+    distance INTEGER NOT NULL DEFAULT 0,
+    callable_short_name TEXT NOT NULL,
+
+    script_id TEXT,
+    result_class_id TEXT,
+    user_driven INTEGER,
+    form_id INTEGER,
+    report_type TEXT,
+    report_template TEXT,
+
+    FOREIGN KEY(class_id) REFERENCES class(id)
+);
+
 CREATE TABLE IF NOT EXISTS view (
     id INTEGER PRIMARY KEY,
     class_id INTEGER NOT NULL,
@@ -104,6 +126,12 @@ INSERT INTO class(id, class_id, name, base_class_id, entity_id, menu_caption, cl
 VALUES  (0, "USER",     "Пользователи",     "STRUCTURE", "USER",    "По&льзователи",  "Z#USER#INTERFACE.CLASS#USER",        1, "0100101110100000000000000"),
         (1, "CL_PRIV",  "Физические лица",  "STRUCTURE", "CLIENT",  "&Клиенты",       "Z#CL_PRIV#INTERFACE.CLASS#CL_PRIV",  1, "0100110000100010000010000"),
         (2, "CL_ORG",   "Организации",      "STRUCTURE", "CLIENT",  "&Клиенты",       "Z#CL_ORG#INTERFACE.CLASS#CL_ORG",    1, "0100110000100000000010000")
+;
+
+INSERT INTO method(
+        id,     class_id,   name,                   short_name, type,   form_class_id,  callable_short_name,    script_id,  result_class_id,    user_driven, form_id,   report_type,    report_template,    properties)
+VALUES  -- ::[USER].[TEST] "Тестовая операция"
+        (311,   0,          "Тестовая операция",    "TEST",     "M",    "USER",         "TEST",                 NULL,       NULL,               1,           NULL,      NULL,           NULL,               "|ARCHPACK 0|BUF |CMD Y|COMMIT N|COMPILER 01111011111111FF0000|CREATE N|CRITICAL N|DEFHOTKEY Y|EMPTY_ID N|FOCUS_VALIDATE 2|HOTKEY 368|IPIPE |LOAD_VALIDATE 2|OPIPE |PARAMS N|PRIORITY 100|REFRESH Y|RTLBASE 807001|RUN_MON N|SHARE N|STREAM N|")
 ;
 
 INSERT INTO view(id, class_id, name, short_name, properties, is_default, to_printer, to_file, source_id, extension_id)

@@ -14,16 +14,19 @@ use tracing::Level;
 use crate::{
   application::{
     repositories::{
-      class::SqliteClassRepository, session::SqliteSessionRepository, settings::SqliteSettingsRepository,
-      view::SqliteViewRepository,
+      class::SqliteClassRepository, method::SqliteMethodRepository, session::SqliteSessionRepository,
+      settings::SqliteSettingsRepository, view::SqliteViewRepository,
     },
     services::{
-      class::ClassServiceImpl, session::SessionServiceImpl, settings::SettingsServiceImpl, view::ViewServiceImpl,
+      class::ClassServiceImpl, method::MethodServiceImpl, session::SessionServiceImpl, settings::SettingsServiceImpl,
+      view::ViewServiceImpl,
     },
   },
   config::args::Args,
   database::sqlite::create_db,
-  domain::services::{class::ClassService, session::SessionService, settings::SettingsService, view::ViewService},
+  domain::services::{
+    class::ClassService, method::MethodService, session::SessionService, settings::SettingsService, view::ViewService,
+  },
   error::Error,
   representation::{
     middlewares::logger::log_body,
@@ -37,6 +40,7 @@ pub struct AppState {
   pub session_service: Arc<dyn SessionService>,
   pub settings_service: Arc<dyn SettingsService>,
   pub class_service: Arc<dyn ClassService>,
+  pub method_service: Arc<dyn MethodService>,
   pub view_service: Arc<dyn ViewService>,
 }
 
@@ -46,12 +50,14 @@ impl AppState {
     let session_service = SessionServiceImpl::new(SqliteSessionRepository::new(pool.clone()));
     let settings_service = SettingsServiceImpl::new(SqliteSettingsRepository::new(pool.clone()));
     let class_service = ClassServiceImpl::new(SqliteClassRepository::new(pool.clone()));
+    let method_service = MethodServiceImpl::new(SqliteMethodRepository::new(pool.clone()));
     let view_service = ViewServiceImpl::new(SqliteViewRepository::new(pool));
     Self {
       args,
       session_service: Arc::new(session_service),
       settings_service: Arc::new(settings_service),
       class_service: Arc::new(class_service),
+      method_service: Arc::new(method_service),
       view_service: Arc::new(view_service),
     }
   }
