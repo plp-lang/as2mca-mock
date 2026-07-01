@@ -95,7 +95,7 @@ pub struct Column {
   #[serde(rename = "@Width")]
   pub width: u32,
   #[serde(rename = "@Align")]
-  pub align: u8, // TODO: Left = 0, Center = 1, Right = 2
+  pub align: Align,
   #[serde(rename = "@Position")]
   pub position: u32,
   #[serde(rename = "@Qual")]
@@ -109,7 +109,7 @@ pub struct Column {
   #[serde(rename = "@IsCellStyle")]
   pub is_cell_style: u8,
   #[serde(rename = "@IsInvisible")]
-  pub is_invisible: u8, // TODO: Visible = 0, Hidden = 2
+  pub is_invisible: Invisible,
   #[serde(rename = "@AbilityPerformOperation")]
   pub ability_perform_operation: bool,
 
@@ -123,6 +123,28 @@ pub struct Column {
   pub reference_type: Option<u8>,
   #[serde(rename = "@Logging", skip_serializing_if = "Option::is_none")]
   pub logging: Option<Logging>,
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[sqlx(type_name = "INTEGER")]
+pub enum Align {
+  #[serde(rename = "0")]
+  Left = 0,
+  #[serde(rename = "1")]
+  Center = 1,
+  #[serde(rename = "2")]
+  Right = 2,
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[sqlx(type_name = "INTEGER")]
+pub enum Invisible {
+  #[serde(rename = "0")]
+  Visible = 0,
+  #[serde(rename = "2")]
+  Hidden = 2,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
@@ -151,7 +173,7 @@ pub enum Logging {
 pub struct ViewDataGet<'a> {
   pub view_short_name: &'a str,
   pub class_short_name: &'a str,
-  pub rows_limit: i64,
+  pub rows_limit: u32,
   pub object_id: Option<ObjectID>,
 }
 

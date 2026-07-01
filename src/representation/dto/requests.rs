@@ -1,4 +1,4 @@
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 
 use crate::{
   domain::entities::{
@@ -12,7 +12,7 @@ pub const XML_HEADER: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone=
 
 #[derive(Debug, Deserialize)]
 pub struct Request {
-  #[serde(flatten)]
+  #[serde(rename = "$value")]
   pub body: RequestKind,
 }
 
@@ -68,6 +68,7 @@ pub struct ObjectsLock {
   pub objects: Vec<Object>,
 }
 
+/// Экземпляр ТБП
 #[derive(Debug, Deserialize)]
 pub struct Object {
   #[serde(rename = "@ID")]
@@ -81,7 +82,7 @@ pub struct Object {
 pub struct ClassesGet {
   #[serde(rename = "@SessionID")]
   pub session_id: SessionId,
-  #[serde(rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub class_info: Vec<ClassInfo>,
 }
 
@@ -131,8 +132,8 @@ pub struct MethodBegin {
 pub struct ObjectClassAndArchiveKeyGet {
   #[serde(rename = "@SessionID")]
   pub session_id: SessionId,
-  #[serde(rename = "@ObjectID", deserialize_with = "string_to_i64")]
-  pub object_id: i64,
+  #[serde(rename = "@ObjectID")]
+  pub object_id: ObjectID,
   #[serde(rename = "@BaseClassID")]
   pub base_class_id: String,
 }
@@ -183,8 +184,8 @@ pub struct ViewDataGetCancelable {
   pub hint: String,
   #[serde(rename = "@AllowTimestampMilliseconds")]
   pub allow_timestamp_milliseconds: String,
-  #[serde(rename = "@RowsLimit", default, deserialize_with = "optional_string_to_i64")]
-  pub rows_limit: Option<i64>,
+  #[serde(rename = "@RowsLimit", default)]
+  pub rows_limit: Option<u32>,
   #[serde(rename = "$value")]
   pub body: Option<ObjectFilter>,
 }
@@ -383,24 +384,4 @@ pub struct SystemCoreInfoGet {
 pub struct SystemServerVersionGet {
   #[serde(rename = "@SessionID")]
   pub session_id: SessionId,
-}
-
-fn string_to_i64<'de, D>(deserializer: D) -> Result<i64, D::Error>
-where
-  D: Deserializer<'de>,
-{
-  let s: String = String::deserialize(deserializer)?;
-  s.parse::<i64>().map_err(serde::de::Error::custom)
-}
-
-fn optional_string_to_i64<'de, D>(deserializer: D) -> Result<Option<i64>, D::Error>
-where
-  D: Deserializer<'de>,
-{
-  let opt: Option<String> = Option::deserialize(deserializer)?;
-  match opt {
-    None => Ok(None),
-    Some(s) if s.is_empty() => Ok(None),
-    Some(s) => s.parse::<i64>().map(Some).map_err(serde::de::Error::custom),
-  }
 }
