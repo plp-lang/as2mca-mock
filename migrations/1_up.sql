@@ -70,6 +70,18 @@ CREATE TABLE IF NOT EXISTS method_parameter (
   FOREIGN KEY(method_id) REFERENCES method(id)
 );
 
+CREATE TABLE IF NOT EXISTS method_variable (
+  id INTEGER PRIMARY KEY,
+  method_id INTEGER NOT NULL,
+
+  short_name TEXT NOT NULL,
+  class_id TEXT NOT NULL,
+  position INTEGER NOT NULL,
+  reference_type TEXT NOT NULL,
+
+  FOREIGN KEY(method_id) REFERENCES method(id)
+);
+
 CREATE TABLE IF NOT EXISTS method_control (
   id INTEGER PRIMARY KEY,
   method_id INTEGER NOT NULL,

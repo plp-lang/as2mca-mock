@@ -18,6 +18,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  MethodVariablesGet(MethodVariablesGet),
   MethodControlsGet(MethodControlsGet),
   MethodParametersGet(MethodParametersGet),
   MethodBegin(MethodBegin),
@@ -68,6 +69,15 @@ pub struct MethodControlsGet {
 /// Запрос списка параметров операции
 #[derive(Debug, Deserialize)]
 pub struct MethodParametersGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@MethodID")]
+  pub method_id: MethodId,
+}
+
+/// Запрос списка публичных переменных операции
+#[derive(Debug, Deserialize)]
+pub struct MethodVariablesGet {
   #[serde(rename = "@SessionID")]
   pub session_id: SessionId,
   #[serde(rename = "@MethodID")]

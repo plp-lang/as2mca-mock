@@ -207,6 +207,13 @@ pub async fn api(
       let parameters = state.method_service.get_method_parameters(&method_id).await?;
       ResponseKind::MethodParameters(responses::MethodParameters { parameters })
     }
+    requests::RequestKind::MethodVariablesGet(requests::MethodVariablesGet {
+      session_id: _,
+      method_id,
+    }) => {
+      let variables = state.method_service.get_method_variables(&method_id).await?;
+      ResponseKind::MethodVariables(responses::MethodVariables { variables })
+    }
     requests::RequestKind::MethodControlsGet(requests::MethodControlsGet { session_id: _, form_id }) => {
       let controls = state.method_service.get_method_controls(&form_id).await?;
       ResponseKind::Controls(responses::Controls { controls })

@@ -4,7 +4,7 @@ use crate::{
   domain::entities::{
     self,
     class::Class,
-    method::{Control, Method, MethodParameter},
+    method::{Control, Method, MethodParameter, MethodVariable},
     view::{Column, Row, View},
   },
   representation::dto::{DebugPipeName, SessionId},
@@ -21,6 +21,7 @@ pub struct Response {
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
   Controls(Controls),
+  MethodVariables(MethodVariables),
   MethodParameters(MethodParameters),
   MethodFrame(MethodFrame),
   ObjectClassAndArchiveKey(ObjectClassAndArchiveKey),
@@ -69,6 +70,13 @@ pub struct Controls {
 pub struct MethodParameters {
   #[serde(default, rename = "$value")]
   pub parameters: Vec<MethodParameter>,
+}
+
+/// Список публичных переменных операции.
+#[derive(Debug, Serialize)]
+pub struct MethodVariables {
+  #[serde(default, rename = "$value")]
+  pub variables: Vec<MethodVariable>,
 }
 
 // TODO

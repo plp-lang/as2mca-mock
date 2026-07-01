@@ -3,7 +3,7 @@ use sqlx::SqlitePool;
 
 use crate::{
   domain::{
-    entities::method::{Control, FormId, Method, MethodId, MethodParameter},
+    entities::method::{Control, FormId, Method, MethodId, MethodParameter, MethodVariable},
     repositories::method::MethodRepository,
   },
   error::Error,
@@ -67,6 +67,24 @@ impl MethodRepository for SqliteMethodRepository {
     .fetch_all(&self.db)
     .await?;
     Ok(parameters)
+  }
+
+  /// Получить список публичных параменных операции
+  async fn get_method_variables(&self, method_id: &MethodId) -> Result<Vec<MethodVariable>, Error> {
+    let variables = sqlx::query_as::<_, MethodVariable>(
+      "
+          SELECT
+            short_name
+            , class_id
+            , position
+            , reference_type
+          FROM method_variable
+          WHERE method_id = $1",
+    )
+    .bind(method_id)
+    .fetch_all(&self.db)
+    .await?;
+    Ok(variables)
   }
 
   async fn get_method_controls(&self, form_id: &FormId) -> Result<Vec<Control>, Error> {

@@ -98,11 +98,28 @@ pub struct MethodParameter {
   pub default_value: Option<String>,
 }
 
+/// Описание входного параметра операции.
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+pub struct MethodVariable {
+  /// Имя переменной.
+  #[serde(rename = "@ShortName")]
+  pub short_name: String,
+  /// Тип переменной.
+  #[serde(rename = "@ClassID")]
+  pub class_id: String,
+  #[serde(rename = "@Position")]
+  pub position: u32,
+  #[serde(rename = "@ReferenceType")]
+  pub reference_type: ReferenceType,
+}
+
 /// Тип ссылочного типа
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Type)]
 #[sqlx(type_name = "TEXT")]
 pub enum ReferenceType {
   D,
+  /// `table of`?
+  T,
 }
 
 /// TODO
@@ -160,7 +177,7 @@ pub struct Control {
   pub validate_name: String,
 
   /// ID родительского элемента на форме.
-  #[serde(rename = "@ParentID", skip_serializing_if = "Option::is_none")]
+  #[serde(rename = "@ParentID")]
   pub parent_id: Option<ControlId>,
 
   /// Короткое имя ТБП (тип, справочник) которому соответствует значение в элементе.
