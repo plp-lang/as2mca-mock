@@ -20,6 +20,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  Classes(Classes),
   Controls(Controls),
   MethodVariables(MethodVariables),
   MethodParameters(MethodParameters),
@@ -56,6 +57,13 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+/// Список типов/ТБП.
+#[derive(Debug, Serialize)]
+pub struct Classes {
+  #[serde(default, rename = "$value")]
+  pub body: Vec<Class>,
 }
 
 /// Спиок элементов на форме

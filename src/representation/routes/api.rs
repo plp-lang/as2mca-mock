@@ -218,6 +218,17 @@ pub async fn api(
       let controls = state.method_service.get_method_controls(&form_id).await?;
       ResponseKind::Controls(responses::Controls { controls })
     }
+    requests::RequestKind::ClassesGet(requests::ClassesGet {
+      session_id: _,
+      class_info,
+    }) => {
+      let names = class_info
+        .iter()
+        .map(|v| String::as_str(&v.class_id))
+        .collect::<Vec<_>>();
+      let body = state.class_service.get_all_by_id(&names).await?;
+      ResponseKind::Classes(responses::Classes { body })
+    }
   };
 
   let data = responses::Response { body };

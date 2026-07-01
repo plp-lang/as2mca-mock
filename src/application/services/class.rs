@@ -20,4 +20,8 @@ impl<R: ClassRepository + Send + Sync> ClassService for ClassServiceImpl<R> {
   async fn get_all(&self) -> Result<Vec<Class>, Error> {
     self.repo.get_all().await
   }
+
+  async fn get_all_by_id(&self, class_short_names: &[&str]) -> Result<Vec<Class>, Error> {
+    self.repo.get_all_by_id(class_short_names).await
+  }
 }

@@ -18,6 +18,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  ClassesGet(ClassesGet),
   MethodVariablesGet(MethodVariablesGet),
   MethodControlsGet(MethodControlsGet),
   MethodParametersGet(MethodParametersGet),
@@ -55,6 +56,21 @@ pub enum RequestKind {
   SystemSettingsGet(SystemSettingsGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
   SystemServerVersionGet(SystemServerVersionGet),
+}
+
+/// Запрос на получения списка типов/ТБП.
+#[derive(Debug, Deserialize)]
+pub struct ClassesGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "$value")]
+  pub class_info: Vec<ClassInfo>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ClassInfo {
+  #[serde(rename = "@ClassID")]
+  pub class_id: String,
 }
 
 /// Запрос списка элементов формы операции

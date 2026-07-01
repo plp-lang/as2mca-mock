@@ -25,13 +25,14 @@ CREATE TABLE IF NOT EXISTS class (
   menu_caption TEXT NOT NULL,
   is_kernel_type INTEGER NOT NULL DEFAULT 0 CHECK (is_kernel_type IN (0, 1)),
   class_interface TEXT NOT NULL,
-  is_accessible INTEGER NOT NULL DEFAULT 0 CHECK (is_accessible IN (0, 1)),
   flags TEXT NOT NULL,
 
+  is_accessible INTEGER CHECK (is_accessible IN (0, 1)),
   pad_length INTEGER,
   data_size INTEGER,
   data_precision INTEGER,
-  properties TEXT
+  properties TEXT,
+  group_id TEXT
 );
 
 CREATE TABLE IF NOT EXISTS method (
@@ -172,10 +173,14 @@ INSERT INTO settings
 VALUES  ("test1", "test1"),
         ("test2", "test2");
 
-INSERT INTO class(id, class_id, name, base_class_id, entity_id, menu_caption, class_interface, is_accessible, flags)
-VALUES  (0, "USER",     "Пользователи",     "STRUCTURE", "USER",    "По&льзователи",  "Z#USER#INTERFACE.CLASS#USER",        1, "0100101110100000000000000"),
-        (1, "CL_PRIV",  "Физические лица",  "STRUCTURE", "CLIENT",  "&Клиенты",       "Z#CL_PRIV#INTERFACE.CLASS#CL_PRIV",  1, "0100110000100010000010000"),
-        (2, "CL_ORG",   "Организации",      "STRUCTURE", "CLIENT",  "&Клиенты",       "Z#CL_ORG#INTERFACE.CLASS#CL_ORG",    1, "0100110000100000000010000")
+INSERT INTO class(
+        id, class_id,       name,               base_class_id,  entity_id, menu_caption,        class_interface,                        flags,                          is_accessible,  pad_length, data_size,  data_precision, properties, group_id)
+VALUES  (0, "USER",         "Пользователи",     "STRUCTURE",    "USER",    "По&льзователи",     "Z#USER#INTERFACE.CLASS#USER",          "0100101110100000000000000",    1,              NULL,       NULL,       NULL,           NULL,       NULL),
+        (1, "CL_PRIV",      "Физические лица",  "STRUCTURE",    "CLIENT",  "&Клиенты",          "Z#CL_PRIV#INTERFACE.CLASS#CL_PRIV",    "0100110000100010000010000",    1,              NULL,       NULL,       NULL,           NULL,       NULL),
+        (2, "CL_ORG",       "Организации",      "STRUCTURE",    "CLIENT",  "&Клиенты",          "Z#CL_ORG#INTERFACE.CLASS#CL_ORG",      "0100110000100000000010000",    1,              NULL,       NULL,       NULL,           NULL,       NULL),
+        (3, "NAME",         "Наименование",     "STRING",       "TYPE",    "Сп&равочники",      "VARCHAR2",                             "0000000000100000000000000",    1,              NULL,       "100",      NULL,           NULL,       NULL),
+        (4, "STRING_30",    "STRING_30",        "STRING",       "TYPE",    "Сп&равочники",      "VARCHAR2",                             "0000000000100000000000000",    1,              NULL,       "30",       NULL,           NULL,       NULL),
+        (5, "BOOLEAN",      "Логика",           "BOOLEAN",      "TYPE",    "Сп&равочники",      "BOOLEAN",                              "0000000000100000000000000",    1,              NULL,       "1",        NULL,           NULL,       NULL)
 ;
 
 INSERT INTO method(
