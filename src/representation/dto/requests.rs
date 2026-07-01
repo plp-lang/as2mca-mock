@@ -18,6 +18,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  ObjectsLock(ObjectsLock),
   ClassesGet(ClassesGet),
   MethodVariablesGet(MethodVariablesGet),
   MethodControlsGet(MethodControlsGet),
@@ -56,6 +57,23 @@ pub enum RequestKind {
   SystemSettingsGet(SystemSettingsGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
   SystemServerVersionGet(SystemServerVersionGet),
+}
+
+/// Запрос на блокировку экземпляра
+#[derive(Debug, Deserialize)]
+pub struct ObjectsLock {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(default, rename = "$value")]
+  pub objects: Vec<Object>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Object {
+  #[serde(rename = "@ID")]
+  pub id: ObjectID,
+  #[serde(rename = "@ClassID")]
+  pub class_id: String,
 }
 
 /// Запрос на получения списка типов/ТБП.

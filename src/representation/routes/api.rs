@@ -17,7 +17,7 @@ use crate::{
     app::AppState,
     dto::{
       DebugPipeName, requests,
-      responses::{self, MethodFrame, ResponseKind},
+      responses::{self, LockResult, MethodFrame, ResponseKind},
     },
     middlewares::{jsessionid::JSessionId, war_path::WarPath, xml::Xml},
   },
@@ -229,6 +229,7 @@ pub async fn api(
       let body = state.class_service.get_all_by_id(&names).await?;
       ResponseKind::Classes(responses::Classes { body })
     }
+    requests::RequestKind::ObjectsLock(_) => responses::ResponseKind::LockResult(LockResult { message: None }),
   };
 
   let data = responses::Response { body };

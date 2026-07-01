@@ -20,6 +20,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  LockResult(LockResult),
   Classes(Classes),
   Controls(Controls),
   MethodVariables(MethodVariables),
@@ -57,6 +58,13 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+/// Результат блокировки экземпляра
+#[derive(Debug, Serialize)]
+pub struct LockResult {
+  #[serde(rename = "@Message", default)]
+  pub message: Option<String>,
 }
 
 /// Список типов/ТБП.
