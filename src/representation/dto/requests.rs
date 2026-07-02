@@ -19,6 +19,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  MethodValidate(MethodValidate),
   MethodEnd(MethodEnd),
   ObjectsUnlock(ObjectsUnlock),
   MethodValidateDefault(MethodValidateDefault),
@@ -61,6 +62,31 @@ pub enum RequestKind {
   SystemSettingsGet(SystemSettingsGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
   SystemServerVersionGet(SystemServerVersionGet),
+}
+
+/// Запрос на вызов блока `Validate` операции при событии элемента формы.
+#[derive(Debug, Deserialize)]
+pub struct MethodValidate {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@MethodID")]
+  pub method_id: i64,
+  #[serde(rename = "@Type")]
+  pub r#type: ValidateType,
+  #[serde(rename = "@Info")]
+  pub info: String,
+  #[serde(rename = "@DoCommit")]
+  pub do_commit: bool,
+  #[serde(rename = "@GetDebugText")]
+  pub get_debug_text: bool,
+  #[serde(rename = "@OptimizedGridUpdates")]
+  pub optimized_grid_updates: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ValidateType {
+  Validate,
 }
 
 /// Запрос на завершение выполнения операции.

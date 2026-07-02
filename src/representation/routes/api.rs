@@ -238,12 +238,14 @@ pub async fn api(
       responses::ResponseKind::LockResult(responses::LockResult { message: None })
     }
     requests::RequestKind::ObjectsUnlock(_) => responses::ResponseKind::Done(responses::Done {}),
-    requests::RequestKind::MethodValidateDefault(_) => responses::ResponseKind::Validate(responses::Validate {
-      debug_text: "test".to_string(),
-      controls_states: responses::ControlsStates {
-        controls_states: vec![],
-      },
-    }),
+    requests::RequestKind::MethodValidateDefault(_) | requests::RequestKind::MethodValidate(_) => {
+      responses::ResponseKind::Validate(responses::Validate {
+        debug_text: "test".to_string(),
+        controls_states: responses::ControlsStates {
+          controls_states: vec![],
+        },
+      })
+    }
   };
 
   let data = responses::Response { body };
