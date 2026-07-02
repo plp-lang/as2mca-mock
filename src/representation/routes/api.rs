@@ -232,6 +232,7 @@ pub async fn api(
     requests::RequestKind::ObjectsLock(_) => {
       responses::ResponseKind::LockResult(responses::LockResult { message: None })
     }
+    requests::RequestKind::ObjectsUnlock(_) => responses::ResponseKind::Done(responses::Done {}),
     requests::RequestKind::MethodValidateDefault(_) => responses::ResponseKind::Validate(responses::Validate {
       debug_text: "test".to_string(),
       controls_states: responses::ControlsStates {

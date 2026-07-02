@@ -1,3 +1,5 @@
+use serde::{self, Deserialize, Deserializer};
+
 pub mod class;
 pub mod flags;
 pub mod method;
@@ -72,5 +74,19 @@ pub mod option_bool_as_str {
         "expected '1' or '0', received '{other}'"
       ))),
     }
+  }
+}
+
+/// `"TRUE" | "true" | "FALSE" | "false"` -> `bool`
+#[allow(clippy::missing_errors_doc)]
+pub fn deserialize_string_to_bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let s = String::deserialize(deserializer)?;
+  match s.to_ascii_uppercase().as_str() {
+    "TRUE" => Ok(true),
+    "FALSE" => Ok(false),
+    _ => Err(serde::de::Error::custom(format!("invalid boolean string: `{s}`"))),
   }
 }

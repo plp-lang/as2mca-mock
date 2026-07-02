@@ -2,6 +2,7 @@ use serde::Deserialize;
 
 use crate::{
   domain::entities::{
+    deserialize_string_to_bool,
     method::{FormId, MethodId},
     view::{ObjectID, ViewId},
   },
@@ -18,6 +19,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  ObjectsUnlock(ObjectsUnlock),
   MethodValidateDefault(MethodValidateDefault),
   ObjectsLock(ObjectsLock),
   ClassesGet(ClassesGet),
@@ -84,6 +86,15 @@ pub struct MethodValidateDefault {
   pub read_only: bool,
   #[serde(rename = "@GetDebugText")]
   pub get_debug_text: bool,
+}
+
+/// Запрос на разблокировку экземпляров
+#[derive(Debug, Deserialize)]
+pub struct ObjectsUnlock {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@ClearAllLocks", deserialize_with = "deserialize_string_to_bool")]
+  pub clear_all_locks: bool,
 }
 
 /// Запрос на блокировку экземпляра
