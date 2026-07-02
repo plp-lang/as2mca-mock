@@ -186,7 +186,7 @@ VALUES  (0, "USER",         "Пользователи",     "STRUCTURE",    "USE
 INSERT INTO method(
         id,     class_id,   name,                   short_name, type,   form_class_id,  callable_short_name,    script_id,  result_class_id,    user_driven, form_id,   report_type,    report_template,    properties)
 VALUES  -- ::[USER].[TEST] "Тестовая операция"
-        (311,   0,          "Тестовая операция",    "TEST",     "M",    "USER",         "TEST",                 NULL,       NULL,               1,           NULL,      NULL,           NULL,               "|ARCHPACK 0|BUF |CMD Y|COMMIT N|COMPILER 01111011111111FF0000|CREATE N|CRITICAL N|DEFHOTKEY Y|EMPTY_ID N|FOCUS_VALIDATE 2|HOTKEY 368|IPIPE |LOAD_VALIDATE 2|OPIPE |PARAMS N|PRIORITY 100|REFRESH Y|RTLBASE 807001|RUN_MON N|SHARE N|STREAM N|")
+        (311,   0,          "Тестовая операция",    "NEW_AUTO", "M",    "USER",         "TEST",                 NULL,       NULL,               1,           NULL,      NULL,           NULL,               "|ARCHPACK 0|BUF |CMD Y|COMMIT N|COMPILER 01111011111111FF0000|CREATE N|CRITICAL N|DEFHOTKEY Y|EMPTY_ID N|FOCUS_VALIDATE 2|HOTKEY 368|IPIPE |LOAD_VALIDATE 2|OPIPE |PARAMS N|PRIORITY 100|REFRESH Y|RTLBASE 807001|RUN_MON N|SHARE N|STREAM N|")
 ;
 
 INSERT INTO method_parameter(
@@ -214,7 +214,7 @@ VALUES  -- ::[USER].[VW_CRIT_USER] "Полный список"
         -- ::[CL_PRIV].[VW_CRIT_CL_PRIV] "Полный список"
         (3616,          1, "Полный список",                 "VW_CRIT_CL_PRIV",      "|AllMethods Y|HasClass|NotObjects|PlPlus|ShowChild|USERCONTEXT 1|",            1, 1, 1, NULL, 4172642368),
         (4172642368,    1, "Полный список (расширение)",    "VW_CRIT_CL_PRIV_EXT",  "|AllMethods Y|HasClass|NotObjects|PlPlus|ShowChild|USERCONTEXT 1|",            0, 1, 1, 3616, NULL),
-        -- ::[CL_PRIV].[VW_CRIT_CL_PRIV] "Полный список"
+        -- ::[CL_ORG].[VW_CRIT_CL_PRIV] "Полный список"
         (4522,          2, "Полный список",                 "VW_CRIT_CL_ORG",       "|AllMethods Y|GENERATE_ANSI_JOINS|HasClass|NotObjects|PlPlus|USERCONTEXT 0|",  1, 1, 1, NULL, NULL)
 ;
 
