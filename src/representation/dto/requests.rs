@@ -19,6 +19,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  MethodEnd(MethodEnd),
   ObjectsUnlock(ObjectsUnlock),
   MethodValidateDefault(MethodValidateDefault),
   ObjectsLock(ObjectsLock),
@@ -62,6 +63,15 @@ pub enum RequestKind {
   SystemServerVersionGet(SystemServerVersionGet),
 }
 
+/// Запрос на завершение выполнения операции.
+#[derive(Debug, Deserialize)]
+pub struct MethodEnd {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@FrameID")]
+  pub frame_id: i64,
+}
+
 /// Запрос вызова блока `Validate` операции.
 #[derive(Debug, Deserialize)]
 #[allow(clippy::struct_excessive_bools)]
@@ -69,13 +79,13 @@ pub struct MethodValidateDefault {
   #[serde(rename = "@SessionID")]
   pub session_id: SessionId,
   #[serde(rename = "@MethodID")]
-  pub method_id: i64,
+  pub method_id: MethodId,
   #[serde(rename = "@Info")]
   pub info: String,
   #[serde(rename = "@DoCommit")]
   pub do_commit: bool,
   #[serde(rename = "@ObjectID")]
-  pub object_id: i64,
+  pub object_id: ObjectID,
   #[serde(rename = "@ClassID")]
   pub class_id: String,
   #[serde(rename = "@DebugLevel")]

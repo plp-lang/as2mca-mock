@@ -199,7 +199,12 @@ pub async fn api(
     requests::RequestKind::MethodBegin(requests::MethodBegin {
       session_id: _,
       method_id: _,
-    }) => ResponseKind::MethodFrame(responses::MethodFrame { frame_id: 0 }),
+    }) => ResponseKind::MethodFrame(responses::MethodFrame { frame_id: Some(0) }),
+
+    requests::RequestKind::MethodEnd(requests::MethodEnd {
+      session_id: _,
+      frame_id: _,
+    }) => ResponseKind::MethodFrame(responses::MethodFrame { frame_id: None }),
     requests::RequestKind::MethodParametersGet(requests::MethodParametersGet {
       session_id: _,
       method_id,

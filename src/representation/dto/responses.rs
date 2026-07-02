@@ -124,8 +124,8 @@ pub struct MethodVariables {
 // TODO
 #[derive(Debug, Serialize)]
 pub struct MethodFrame {
-  #[serde(rename = "@FrameID")]
-  pub frame_id: i64,
+  #[serde(rename = "@FrameID", skip_serializing_if = "Option::is_none")]
+  pub frame_id: Option<i64>,
 }
 
 #[derive(Debug, Serialize)]
