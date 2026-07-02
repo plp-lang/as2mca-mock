@@ -17,7 +17,7 @@ use crate::{
     app::AppState,
     dto::{
       DebugPipeName, requests,
-      responses::{self, LockResult, MethodFrame, ResponseKind},
+      responses::{self, ResponseKind},
     },
     middlewares::{jsessionid::JSessionId, war_path::WarPath, xml::Xml},
   },
@@ -199,7 +199,7 @@ pub async fn api(
     requests::RequestKind::MethodBegin(requests::MethodBegin {
       session_id: _,
       method_id: _,
-    }) => ResponseKind::MethodFrame(MethodFrame { frame_id: 0 }),
+    }) => ResponseKind::MethodFrame(responses::MethodFrame { frame_id: 0 }),
     requests::RequestKind::MethodParametersGet(requests::MethodParametersGet {
       session_id: _,
       method_id,
@@ -229,7 +229,15 @@ pub async fn api(
       let body = state.class_service.get_all_by_id(&names).await?;
       ResponseKind::Classes(responses::Classes { body })
     }
-    requests::RequestKind::ObjectsLock(_) => responses::ResponseKind::LockResult(LockResult { message: None }),
+    requests::RequestKind::ObjectsLock(_) => {
+      responses::ResponseKind::LockResult(responses::LockResult { message: None })
+    }
+    requests::RequestKind::MethodValidateDefault(_) => responses::ResponseKind::Validate(responses::Validate {
+      debug_text: "test".to_string(),
+      controls_states: responses::ControlsStates {
+        controls_states: vec![],
+      },
+    }),
   };
 
   let data = responses::Response { body };

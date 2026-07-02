@@ -20,6 +20,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  Validate(Validate),
   LockResult(LockResult),
   Classes(Classes),
   Controls(Controls),
@@ -58,6 +59,31 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+/// Результат выполнения блока `Validate` операции.
+#[derive(Debug, Serialize)]
+pub struct Validate {
+  #[serde(rename = "@DebugText")]
+  pub debug_text: String,
+  #[serde(rename = "$value")]
+  pub controls_states: ControlsStates,
+}
+
+/// Список значений элементов формы операции.
+#[derive(Debug, Serialize)]
+pub struct ControlsStates {
+  #[serde(rename = "$value", default)]
+  pub controls_states: Vec<ControlsState>,
+}
+
+/// Значение элемента формы операции.
+#[derive(Debug, Serialize)]
+pub struct ControlsState {
+  #[serde(rename = "@ID")]
+  pub id: i64,
+  #[serde(rename = "@Value")]
+  pub value: String,
 }
 
 /// Результат блокировки экземпляра

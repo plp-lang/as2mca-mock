@@ -18,6 +18,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  MethodValidateDefault(MethodValidateDefault),
   ObjectsLock(ObjectsLock),
   ClassesGet(ClassesGet),
   MethodVariablesGet(MethodVariablesGet),
@@ -57,6 +58,32 @@ pub enum RequestKind {
   SystemSettingsGet(SystemSettingsGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
   SystemServerVersionGet(SystemServerVersionGet),
+}
+
+/// Запрос вызова блока `Validate` операции.
+#[derive(Debug, Deserialize)]
+#[allow(clippy::struct_excessive_bools)]
+pub struct MethodValidateDefault {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@MethodID")]
+  pub method_id: i64,
+  #[serde(rename = "@Info")]
+  pub info: String,
+  #[serde(rename = "@DoCommit")]
+  pub do_commit: bool,
+  #[serde(rename = "@ObjectID")]
+  pub object_id: i64,
+  #[serde(rename = "@ClassID")]
+  pub class_id: String,
+  #[serde(rename = "@DebugLevel")]
+  pub debug_level: u8,
+  #[serde(rename = "@IsCalledFromAnotherMethod")]
+  pub is_called_from_another_method: bool,
+  #[serde(rename = "@ReadOnly")]
+  pub read_only: bool,
+  #[serde(rename = "@GetDebugText")]
+  pub get_debug_text: bool,
 }
 
 /// Запрос на блокировку экземпляра
