@@ -1,4 +1,4 @@
-use crate::{error::Error, representation::dto::SessionId};
+use crate::{domain::entities::session::SessionId, error::Error};
 use axum::{
   extract::FromRequestParts,
   http::{header::COOKIE, request::Parts},

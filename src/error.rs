@@ -27,9 +27,6 @@ pub enum Error {
   #[error("`Authorization` header must be for basic authentication")]
   AuthorizationNotBasic,
 
-  #[error("Authenticated user not found for session: {0}")]
-  AuthenticatedUserNotFound(String),
-
   #[error("{0}")]
   InvalidHeaderValue(#[from] InvalidHeaderValue),
 
@@ -59,8 +56,6 @@ impl IntoResponse for Error {
   fn into_response(self) -> Response<Body> {
     match self {
       Self::PageNotFound => StatusCode::NOT_FOUND.into_response(),
-      Self::AuthenticatedUserNotFound(message) => new_error(StatusCode::NOT_FOUND.to_string(), message).into_response(),
-
       Self::AuthorizationHeaderIsMissing | Self::AuthorizationHeaderInvalidChars | Self::AuthorizationNotBasic => (
         StatusCode::UNAUTHORIZED,
         [(WWW_AUTHENTICATE, r#"Basic realm="2MCA Auth""#)],

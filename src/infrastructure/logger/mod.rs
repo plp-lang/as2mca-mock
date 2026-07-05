@@ -1,6 +1,6 @@
 use tracing_subscriber::{EnvFilter, fmt};
 
-use crate::config::args::LogFormat;
+use crate::infrastructure::config::args::LogFormat;
 
 pub fn init_tracing(log_filter: &str, log_format: &LogFormat) {
   let filter = EnvFilter::new(log_filter);

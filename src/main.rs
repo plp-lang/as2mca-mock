@@ -1,4 +1,7 @@
-use as2mca_mock::{config::args::Args, logger::init_tracing, representation::app::app};
+use as2mca_mock::{
+  infrastructure::{config::args::Args, logger::init_tracing},
+  representation::app::app,
+};
 use clap::Parser;
 
 #[tokio::main]

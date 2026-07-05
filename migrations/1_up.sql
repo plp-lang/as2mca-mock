@@ -1,22 +1,58 @@
 PRAGMA foreign_keys = ON;
 
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  username TEXT NOT NULL UNIQUE,
+  fullname TEXT NOT NULL,
+  properties TEXT
+);
+
+CREATE TABLE IF NOT EXISTS groups (
+  id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  name TEXT NOT NULL,
+
+  user_id INTEGER NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS profiles (
+  id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  name TEXT NOT NULL,
+  property TEXT NOT NULL,
+  value TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY,
-  username TEXT NOT NULL,
-  password_hash TEXT NOT NULL,
-  debug_pipe_id TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  debug_pipe_id TEXT,
   initial_at TEXT,
-  expires_at TEXT
+  expires_at TEXT,
+
+  user_id INTEGER NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS settings (
-  name TEXT PRIMARY KEY,
-  value TEXT
+  id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  name TEXT NOT NULL UNIQUE,
+  value TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS options (
+  id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  name TEXT NOT NULL UNIQUE,
+  value INTEGER NOT NULL DEFAULT 0 CHECK (value IN (0, 1))
 );
 
 CREATE TABLE IF NOT EXISTS class (
   id TEXT PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   class_id TEXT NOT NULL UNIQUE,
 
   name TEXT NOT NULL,
@@ -37,6 +73,7 @@ CREATE TABLE IF NOT EXISTS class (
 
 CREATE TABLE IF NOT EXISTS method (
   id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   class_id INTEGER NOT NULL,
 
   name TEXT NOT NULL,
@@ -59,6 +96,7 @@ CREATE TABLE IF NOT EXISTS method (
 
 CREATE TABLE IF NOT EXISTS method_parameter (
   id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   method_id INTEGER NOT NULL,
 
   short_name TEXT NOT NULL,
@@ -73,6 +111,7 @@ CREATE TABLE IF NOT EXISTS method_parameter (
 
 CREATE TABLE IF NOT EXISTS method_variable (
   id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   method_id INTEGER NOT NULL,
 
   short_name TEXT NOT NULL,
@@ -85,6 +124,7 @@ CREATE TABLE IF NOT EXISTS method_variable (
 
 CREATE TABLE IF NOT EXISTS method_control (
   id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   method_id INTEGER NOT NULL,
 
   control TEXT NOT NULL,
@@ -109,6 +149,7 @@ CREATE TABLE IF NOT EXISTS method_control (
 
 CREATE TABLE IF NOT EXISTS view (
   id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   class_id INTEGER NOT NULL,
 
   name TEXT NOT NULL,
@@ -135,6 +176,7 @@ CREATE TABLE IF NOT EXISTS view (
 
 CREATE TABLE IF NOT EXISTS column (
   id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   view_id INTEGER NOT NULL,
 
   name TEXT NOT NULL,
@@ -160,6 +202,7 @@ CREATE TABLE IF NOT EXISTS column (
 
 CREATE TABLE IF NOT EXISTS row_item (
   id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   object_id INTEGER NOT NULL,
   view_id INTEGER NOT NULL,
 
@@ -169,9 +212,30 @@ CREATE TABLE IF NOT EXISTS row_item (
   FOREIGN KEY(view_id) REFERENCES view(id)
 );
 
-INSERT INTO settings
-VALUES  ("test1", "test1"),
-        ("test2", "test2");
+INSERT INTO users(
+        id, username, fullname,             properties)
+VALUES (0,  "TEST",   "Тест Тест Тестович", "|ADMIN|CONTEXT|PICKER|PROFILE DEFAULT|SESSION|")
+;
+
+INSERT INTO groups(
+        name,         user_id)
+VALUES ("ADMIN_GRP",  0)
+;
+
+INSERT INTO profiles(
+        name,       property,             value)
+VALUES ("DEFAULT",  "SESSIONS_PER_USER",  "UNLIMITED")
+;
+
+INSERT INTO settings(
+        name,                 value)
+VALUES  ("SHOW_SYSTEM_MENU", "YES")
+;
+
+INSERT INTO options(
+        name,                 value)
+VALUES  ("NAV_SKIN_INTERFACE", 1)
+;
 
 INSERT INTO class(
         id, class_id,       name,               base_class_id,  entity_id, menu_caption,        class_interface,                        flags,                          is_accessible,  pad_length, data_size,  data_precision, properties, group_id)

@@ -1,12 +1,10 @@
 use serde::Deserialize;
 
-use crate::{
-  domain::entities::{
-    deserialize_string_to_bool,
-    method::{FormId, MethodId},
-    view::{ObjectID, ViewId},
-  },
-  representation::dto::{DebugPipeName, SessionId},
+use crate::domain::entities::{
+  deserialize_string_to_bool,
+  method::{FormId, MethodId},
+  session::{DebugPipeName, SessionId},
+  view::{ObjectID, ViewId},
 };
 
 pub const XML_HEADER: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#;

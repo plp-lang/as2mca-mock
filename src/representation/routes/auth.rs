@@ -25,8 +25,8 @@ pub async fn authbasic(
   AuthBasic((username, password)): AuthBasic,
   JSessionId(session_id): JSessionId,
 ) -> Result<Response<Body>, Error> {
-  let auth_data = AuthData::new(session_id.clone().into(), username, password);
-  state.session_service.create(&auth_data).await?;
+  let auth_data = AuthData::new(session_id.clone(), username, password);
+  state.service.create_session(&auth_data).await?;
 
   let cookie = Cookie::build(("JSESSIONID", session_id.as_str()))
     .path(format!("/{war_name}"))

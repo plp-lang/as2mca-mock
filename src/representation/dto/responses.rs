@@ -1,13 +1,12 @@
 use serde::Serialize;
 
-use crate::{
-  domain::entities::{
-    self,
-    class::Class,
-    method::{Control, Method, MethodParameter, MethodVariable},
-    view::{Column, Row, View},
-  },
-  representation::dto::{DebugPipeName, SessionId},
+use crate::domain::entities::{
+  self,
+  class::Class,
+  method::{Control, Method, MethodParameter, MethodVariable},
+  session::{DebugPipeName, SessionId},
+  settings::User,
+  view::{Column, Row, View},
 };
 
 pub type Setting = entities::settings::Setting;
@@ -89,35 +88,35 @@ pub struct ControlsState {
 /// Результат блокировки экземпляра
 #[derive(Debug, Serialize)]
 pub struct LockResult {
-  #[serde(rename = "@Message", default)]
+  #[serde(rename = "@Message", skip_serializing_if = "Option::is_none")]
   pub message: Option<String>,
 }
 
 /// Список типов/ТБП.
 #[derive(Debug, Serialize)]
 pub struct Classes {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub body: Vec<Class>,
 }
 
 /// Спиок элементов на форме
 #[derive(Debug, Serialize)]
 pub struct Controls {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub controls: Vec<Control>,
 }
 
 /// Спиок входных параметров операции
 #[derive(Debug, Serialize)]
 pub struct MethodParameters {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub parameters: Vec<MethodParameter>,
 }
 
 /// Список публичных переменных операции.
 #[derive(Debug, Serialize)]
 pub struct MethodVariables {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub variables: Vec<MethodVariable>,
 }
 
@@ -150,7 +149,7 @@ pub struct PipeText {
 
 #[derive(Debug, Serialize)]
 pub struct BackwardReferences {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub body: Vec<BackwardReference>,
 }
 
@@ -168,7 +167,7 @@ pub struct BackwardReference {
 
 #[derive(Debug, Serialize)]
 pub struct ViewData {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub body: Vec<Row>,
 }
 
@@ -180,13 +179,13 @@ pub struct States {}
 
 #[derive(Debug, Serialize)]
 pub struct Columns {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub body: Vec<Column>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct Methods {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub body: Vec<Method>,
 }
 
@@ -198,7 +197,7 @@ pub struct ChildClasses {}
 
 #[derive(Debug, Serialize)]
 pub struct Views {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub body: Vec<View>,
 }
 
@@ -207,7 +206,7 @@ pub struct UserMenu {}
 
 #[derive(Debug, Serialize)]
 pub struct Guides {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub body: Vec<GuideClass>,
 }
 
@@ -234,7 +233,7 @@ pub struct GuideClass {
 
 #[derive(Debug, Serialize)]
 pub struct GuidesGroups {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub body: Vec<GuidesGroup>,
 }
 
@@ -248,15 +247,15 @@ pub struct GuidesGroup {
 
 #[derive(Debug, Serialize)]
 pub struct Types {
-  #[serde(default, rename = "$value")]
+  #[serde(rename = "$value", default)]
   pub body: Vec<Class>,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename = "User")]
 pub struct CheckResult {
-  #[serde(rename = "@Value")]
-  pub value: String,
+  #[serde(rename = "@Value", with = "number_as_bool")]
+  pub value: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -280,18 +279,8 @@ pub struct UserPrivileged {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct NovoAllowedCheckResult {
-  #[serde(rename = "@Value")]
-  pub value: String,
-}
-
-#[derive(Debug, Serialize, Clone)]
-pub struct User {
-  #[serde(rename = "@Name")]
-  pub name: String,
-  #[serde(rename = "@ShortName")]
-  pub short_name: String,
-  #[serde(rename = "@Properties")]
-  pub properties: String,
+  #[serde(rename = "@Value", with = "number_as_bool")]
+  pub value: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -358,5 +347,22 @@ pub struct CoreInfo {
 #[derive(Debug, Serialize, Clone)]
 pub struct Settings {
   #[serde(rename = "$value")]
-  pub body: Vec<Setting>,
+  pub settings: Vec<Setting>,
+}
+
+/// Модуль для сериализации строк `bool` в `"1"` / `"0"`.
+pub mod number_as_bool {
+  use serde::{self, Serializer};
+
+  /// # Errors
+  pub fn serialize<S>(value: &bool, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    if *value {
+      serializer.serialize_str("1")
+    } else {
+      serializer.serialize_str("0")
+    }
+  }
 }
