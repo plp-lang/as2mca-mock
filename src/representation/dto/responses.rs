@@ -19,8 +19,10 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  NotFound(NotFound),
   Validate(Validate),
   LockResult(LockResult),
+  Class(Class),
   Classes(Classes),
   Controls(Controls),
   MethodVariables(MethodVariables),
@@ -59,6 +61,9 @@ pub enum ResponseKind {
   CoreInfo(CoreInfo),
   Settings(Settings),
 }
+
+#[derive(Debug, Serialize)]
+pub struct NotFound {}
 
 /// Результат выполнения блока `Validate` операции.
 #[derive(Debug, Serialize)]

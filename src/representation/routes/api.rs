@@ -125,6 +125,16 @@ pub async fn api(
       let body = state.service.get_all_classes_by_id(&names).await?;
       ResponseKind::Classes(responses::Classes { body })
     }
+    requests::RequestKind::ClassGet(requests::ClassGet {
+      session_id: _,
+      ref class_id,
+    }) => state
+      .service
+      .get_all_classes_by_id(&[class_id])
+      .await?
+      .last()
+      .cloned()
+      .map_or(ResponseKind::NotFound(responses::NotFound {}), ResponseKind::Class),
     requests::RequestKind::ClassMethodsGet(requests::ClassMethodsGet {
       session_id: _,
       class_id,
@@ -231,15 +241,11 @@ pub async fn api(
     requests::RequestKind::PipeTextGet(requests::PipeTextGet {
       session_id: _,
       pipe_name: _,
-    }) => ResponseKind::PipeText(responses::PipeText {
-      value: "test".to_string(),
-    }),
+    }) => ResponseKind::PipeText(responses::PipeText { value: String::new() }),
     requests::RequestKind::DebugTextGet(requests::DebugTextGet {
       session_id: _,
       direction: _,
-    }) => ResponseKind::DebugText(responses::DebugText {
-      value: "test".to_string(),
-    }),
+    }) => ResponseKind::DebugText(responses::DebugText { value: String::new() }),
     requests::RequestKind::ObjectClassAndArchiveKeyGet(requests::ObjectClassAndArchiveKeyGet {
       session_id: _,
       object_id: _,
@@ -262,7 +268,7 @@ pub async fn api(
     requests::RequestKind::ObjectsUnlock(_) => responses::ResponseKind::Done(responses::Done {}),
     requests::RequestKind::MethodValidateDefault(_) | requests::RequestKind::MethodValidate(_) => {
       responses::ResponseKind::Validate(responses::Validate {
-        debug_text: "test".to_string(),
+        debug_text: String::new(),
         controls_states: responses::ControlsStates {
           controls_states: vec![],
         },

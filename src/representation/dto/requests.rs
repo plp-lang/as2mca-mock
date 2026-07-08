@@ -23,6 +23,7 @@ pub enum RequestKind {
   ObjectsUnlock(ObjectsUnlock),
   MethodValidateDefault(MethodValidateDefault),
   ObjectsLock(ObjectsLock),
+  ClassGet(ClassGet),
   ClassesGet(ClassesGet),
   MethodVariablesGet(MethodVariablesGet),
   MethodControlsGet(MethodControlsGet),
@@ -163,6 +164,15 @@ pub struct ClassesGet {
 
 #[derive(Debug, Deserialize)]
 pub struct ClassInfo {
+  #[serde(rename = "@ClassID")]
+  pub class_id: String,
+}
+
+/// Запрос на получения информации об типе/ТБП
+#[derive(Debug, Deserialize)]
+pub struct ClassGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
   #[serde(rename = "@ClassID")]
   pub class_id: String,
 }
