@@ -19,6 +19,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  ClientScript(ClientScript),
   NotFound(NotFound),
   Validate(Validate),
   LockResult(LockResult),
@@ -60,6 +61,13 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+/// Клиент-скрипт
+#[derive(Debug, Serialize)]
+pub struct ClientScript {
+  #[serde(rename = "@Text")]
+  pub text: String,
 }
 
 #[derive(Debug, Serialize)]

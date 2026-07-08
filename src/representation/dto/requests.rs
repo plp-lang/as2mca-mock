@@ -18,6 +18,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  MethodClientScriptGet(MethodClientScriptGet),
   MethodValidate(MethodValidate),
   MethodEnd(MethodEnd),
   ObjectsUnlock(ObjectsUnlock),
@@ -62,6 +63,15 @@ pub enum RequestKind {
   SystemSettingsGet(SystemSettingsGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
   SystemServerVersionGet(SystemServerVersionGet),
+}
+
+/// Запрос на получение клиент-скрипта операции
+#[derive(Debug, Deserialize)]
+pub struct MethodClientScriptGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@MethodID")]
+  pub method_id: MethodId,
 }
 
 /// Запрос на вызов блока `Validate` операции при событии элемента формы.

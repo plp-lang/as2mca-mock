@@ -274,6 +274,9 @@ pub async fn api(
         },
       })
     }
+    requests::RequestKind::MethodClientScriptGet(_) => {
+      responses::ResponseKind::ClientScript(responses::ClientScript { text: String::new() })
+    }
   };
 
   let data = responses::Response { body };
