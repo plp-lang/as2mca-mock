@@ -90,3 +90,23 @@ where
     _ => Err(serde::de::Error::custom(format!("invalid boolean string: `{s}`"))),
   }
 }
+
+/// Модуль для десериализации пустой строки как отсутствие значения.
+pub mod optional_number {
+  use serde::{self, Deserialize, Deserializer};
+
+  /// # Errors
+  pub fn deserialize<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+  where
+    D: Deserializer<'de>,
+    T: std::str::FromStr,
+    T::Err: std::fmt::Display,
+  {
+    let s: Option<String> = Option::deserialize(deserializer)?;
+    match s {
+      None => Ok(None),
+      Some(s) if s.is_empty() => Ok(None),
+      Some(s) => s.parse::<T>().map(Some).map_err(serde::de::Error::custom),
+    }
+  }
+}

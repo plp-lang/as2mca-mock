@@ -3,6 +3,7 @@ use serde::Deserialize;
 use crate::domain::entities::{
   deserialize_string_to_bool,
   method::{FormId, MethodId},
+  optional_number,
   session::{DebugPipeName, SessionId},
   view::{ObjectID, ViewId},
 };
@@ -108,8 +109,8 @@ pub struct MethodValidateDefault {
   pub info: String,
   #[serde(rename = "@DoCommit")]
   pub do_commit: bool,
-  #[serde(rename = "@ObjectID")]
-  pub object_id: ObjectID,
+  #[serde(rename = "@ObjectID", with = "optional_number")]
+  pub object_id: Option<ObjectID>,
   #[serde(rename = "@ClassID")]
   pub class_id: String,
   #[serde(rename = "@DebugLevel")]
@@ -120,6 +121,8 @@ pub struct MethodValidateDefault {
   pub read_only: bool,
   #[serde(rename = "@GetDebugText")]
   pub get_debug_text: bool,
+  #[serde(rename = "@OptimizedGridUpdates")]
+  pub optimized_grid_updates: bool,
 }
 
 /// Запрос на разблокировку экземпляров

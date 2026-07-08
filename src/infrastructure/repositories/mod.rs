@@ -77,7 +77,7 @@ impl Repository for SqliteRepository {
 
   async fn get_user_info(&self, session_id: &SessionId) -> Result<User, Error> {
     let value = sqlx::query_as::<_, User>(
-      " SELECT u.id, u.username, u.fullname, u.properties
+      " SELECT u.fullname as name, u.username as short_name, u.properties
         FROM users u
         JOIN sessions s ON u.id = s.user_id
         WHERE s.id = $1",
@@ -270,6 +270,9 @@ impl Repository for SqliteRepository {
           , position
           , reference_type
           , direction
+          , view_id
+          , view_class_id
+          , view_filter
           , default_value
         FROM method_parameter
         WHERE method_id = $1",

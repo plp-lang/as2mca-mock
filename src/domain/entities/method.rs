@@ -93,6 +93,13 @@ pub struct MethodParameter {
   #[serde(rename = "@Direction")]
   pub direction: Direction,
 
+  #[serde(rename = "@ViewID", skip_serializing_if = "Option::is_none")]
+  pub view_id: Option<i64>,
+  #[serde(rename = "@ViewClassID", skip_serializing_if = "Option::is_none")]
+  pub view_class_id: Option<String>,
+  #[serde(rename = "@ViewFilter", skip_serializing_if = "Option::is_none")]
+  pub view_filter: Option<String>,
+
   /// Значение по умолчанию.
   #[serde(rename = "@DefaultValue", skip_serializing_if = "Option::is_none")]
   pub default_value: Option<String>,
@@ -205,6 +212,14 @@ pub enum ControlType {
   Object,
   Check,
   Button,
+  Subform,
+  Line,
+  Memo,
+  Frame,
+  Date,
+  Variant,
+  Array,
+  Panel,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

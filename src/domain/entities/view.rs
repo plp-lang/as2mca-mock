@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sqlx::prelude::FromRow;
 use sqlx::sqlite::SqliteValueRef;
@@ -153,6 +155,8 @@ pub enum Invisible {
 pub enum ColumnBase {
   String,
   Number,
+  Boolean,
+  Memo,
   Date,
   Reference,
   Collection,
@@ -200,6 +204,14 @@ pub struct RawRow {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ObjectID(pub i64);
+
+impl FromStr for ObjectID {
+  type Err = <i64 as FromStr>::Err;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    Ok(Self(s.parse()?))
+  }
+}
 
 impl Serialize for ObjectID {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
