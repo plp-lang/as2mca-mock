@@ -6,7 +6,7 @@ use crate::domain::entities::{
   method::{Control, Method, MethodParameter, MethodVariable},
   session::{DebugPipeName, SessionId},
   settings::User,
-  view::{Column, Row, View},
+  view::{Column, ObjectID, Row, View},
 };
 
 pub type Setting = entities::settings::Setting;
@@ -19,6 +19,7 @@ pub struct Response {
 
 #[derive(Debug, Serialize)]
 pub enum ResponseKind {
+  Result(MethodResult),
   ClientScript(ClientScript),
   NotFound(NotFound),
   Validate(Validate),
@@ -61,6 +62,16 @@ pub enum ResponseKind {
   ServerInfo(ServerInfo),
   CoreInfo(CoreInfo),
   Settings(Settings),
+}
+
+/// Результат выполнения операции.
+#[derive(Debug, Serialize)]
+#[serde(rename = "@Result")]
+pub struct MethodResult {
+  #[serde(rename = "@Value")]
+  pub value: ObjectID,
+  #[serde(rename = "$value")]
+  pub controls_states: ControlsStates,
 }
 
 /// Клиент-скрипт

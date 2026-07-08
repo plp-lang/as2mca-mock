@@ -250,7 +250,8 @@ VALUES  (0, "USER",         "Пользователи",     "STRUCTURE",    "USE
         (4, "STRING_30",    "STRING_30",        "STRING",       "TYPE",    "Сп&равочники",      "VARCHAR2",                             "0000000000100000000000000",    1,              NULL,       "30",       NULL,           NULL,       NULL),
         (5, "BOOLEAN",      "Логика",           "BOOLEAN",      "TYPE",    "Сп&равочники",      "BOOLEAN",                              "0000000000100000000000000",    1,              NULL,       "1",        NULL,           NULL,       NULL),
         (6, "FP_TUNE",      "Настройки.",       "STRUCTURE",    "TYPE",    "Сп&равочники",      "Z#FP_TUNE#INTERFACE.CLASS#FP_TUNE",    "0100000000100000000000000",    1,              NULL,       NULL,       NULL,           NULL,       NULL),
-        (7, "STRING_100",   "STRING_100",       "STRING",       "TYPE",    "Сп&равочники",      "VARCHAR2",                             "0000000000100000000000000",    1,              NULL,       "100",      NULL,           NULL,       NULL)
+        (7, "STRING_100",   "STRING_100",       "STRING",       "TYPE",    "Сп&равочники",      "VARCHAR2",                             "0000000000100000000000000",    1,              NULL,       "100",      NULL,           NULL,       NULL),
+        (8, "MEMO",         "MEMO",             "STRING",       "TYPE",    "Сп&равочники",      "VARCHAR2",                             "0000000000100000000000000",    1,              NULL,       "2000",     NULL,           NULL,       NULL)
 ;
 
 INSERT INTO method(

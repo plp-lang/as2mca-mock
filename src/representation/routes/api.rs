@@ -10,14 +10,17 @@ use axum::{
 use chrono::DateTime;
 
 use crate::{
-  domain::entities::{settings::Setting, view::ViewDataGet},
+  domain::entities::{
+    settings::Setting,
+    view::{ObjectID, ViewDataGet},
+  },
   error::Error,
   infrastructure::config::args::build::{COMMIT_AUTHOR, COMMIT_DATE, COMMIT_HASH, COMMIT_TIMESTAMP, PKG_VERSION},
   representation::{
     app::AppState,
     dto::{
       requests,
-      responses::{self, ResponseKind},
+      responses::{self, ControlsStates, ResponseKind},
     },
     middlewares::{jsessionid::JSessionId, war_path::WarPath, xml::Xml},
   },
@@ -277,6 +280,12 @@ pub async fn api(
     requests::RequestKind::MethodClientScriptGet(_) => {
       responses::ResponseKind::ClientScript(responses::ClientScript { text: String::new() })
     }
+    requests::RequestKind::MethodExecute(_) => responses::ResponseKind::Result(responses::MethodResult {
+      value: ObjectID(0),
+      controls_states: ControlsStates {
+        controls_states: vec![],
+      },
+    }),
   };
 
   let data = responses::Response { body };

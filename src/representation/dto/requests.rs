@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 use crate::domain::entities::{
   deserialize_string_to_bool,
-  method::{FormId, MethodId},
+  method::{ControlId, FormId, MethodId},
   optional_number,
   session::{DebugPipeName, SessionId},
   view::{ObjectID, ViewId},
@@ -18,6 +18,7 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub enum RequestKind {
+  MethodExecute(MethodExecute),
   MethodClientScriptGet(MethodClientScriptGet),
   MethodValidate(MethodValidate),
   MethodEnd(MethodEnd),
@@ -91,12 +92,56 @@ pub struct MethodValidate {
   pub get_debug_text: bool,
   #[serde(rename = "@OptimizedGridUpdates")]
   pub optimized_grid_updates: bool,
+  #[serde(rename = "ControlsStates")]
+  pub controls_states: ControlsStates,
+  #[serde(rename = "PLPCallParameters")]
+  pub plpcall_parameters: PLPCallParameters,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ValidateType {
   Validate,
+}
+
+/// Запрос на вызов блока `Execute` операции.
+#[derive(Debug, Deserialize)]
+pub struct MethodExecute {
+  #[serde(rename = "@SessionID")]
+  pub session_id: SessionId,
+  #[serde(rename = "@MethodID")]
+  pub method_id: MethodId,
+  #[serde(rename = "@DoCommit")]
+  pub do_commit: bool,
+  #[serde(rename = "@OptimizedGridUpdates")]
+  pub optimized_grid_updates: bool,
+  #[serde(rename = "ControlsStates")]
+  pub controls_states: ControlsStates,
+  #[serde(rename = "PLPCallParameters")]
+  pub plpcall_parameters: PLPCallParameters,
+}
+
+/// Список значений элементов формы операции.
+#[derive(Debug, Deserialize)]
+pub struct ControlsStates {
+  #[serde(rename = "$value", default)]
+  pub controls_states: Vec<ControlState>,
+}
+
+/// Значение элемента формы операции.
+#[derive(Debug, Deserialize)]
+pub struct ControlState {
+  #[serde(rename = "@ID")]
+  pub id: ControlId,
+  #[serde(rename = "@Value")]
+  pub value: String,
+}
+
+/// Список значений элементов формы операции.
+#[derive(Debug, Deserialize)]
+pub struct PLPCallParameters {
+  #[serde(rename = "$value", default)]
+  pub plpcall_parameters: Vec<()>,
 }
 
 /// Запрос на завершение выполнения операции.
