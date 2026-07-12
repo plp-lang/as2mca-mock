@@ -31,6 +31,7 @@ pub async fn authbasic(
   let cookie = Cookie::build(("JSESSIONID", session_id.as_str()))
     .path(format!("/{war_name}"))
     .http_only(true)
+    .same_site(cookie::SameSite::None)
     .build();
 
   let body = "Authenticate Success";

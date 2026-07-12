@@ -37,4 +37,12 @@ pub struct Args {
 
   #[arg(env = "RUST_LOG", default_value = "info")]
   pub rust_log: String,
+
+  #[arg(
+    long,
+    env = "AS2MCA_MOCKS_CORS_ALLOWED_ORIGINS",
+    default_value = "http://localhost:8000",
+    value_delimiter = ','
+  )]
+  pub cors_allowed_origins: Vec<String>,
 }

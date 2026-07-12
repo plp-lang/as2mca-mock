@@ -17,7 +17,7 @@ pub async fn log_body(req: Request, next: Next) -> Response {
       return axum::http::StatusCode::PAYLOAD_TOO_LARGE.into_response();
     };
     let body_str = String::from_utf8_lossy(&bytes);
-    tracing::debug!(body = %body_str, "<- incoming request body");
+    tracing::debug!(body = %body_str, headers = ?parts.headers, "<- incoming request body");
     Request::from_parts(parts, Body::from(bytes))
   } else {
     req
@@ -37,7 +37,7 @@ pub async fn log_body(req: Request, next: Next) -> Response {
 
     if is_safe {
       if let Ok(bytes) = axum::body::to_bytes(body, MAX_LOG_BODY_SIZE).await {
-        tracing::debug!(body = %String::from_utf8_lossy(&bytes), "-> outgoing response body");
+        tracing::debug!(body = %String::from_utf8_lossy(&bytes), headers = ?parts.headers, "-> outgoing response body");
         Response::from_parts(parts, Body::from(bytes))
       } else {
         tracing::error!("-> outgoing response body too large or failed to buffer");
