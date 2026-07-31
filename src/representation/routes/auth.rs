@@ -10,7 +10,6 @@ use axum::{
 use cookie::Cookie;
 
 use crate::{
-  domain::entities::session::AuthData,
   error::Error,
   representation::{
     app::AppState,
@@ -20,13 +19,12 @@ use crate::{
 
 /// # Errors
 pub async fn authbasic(
-  State(state): State<AppState>,
+  State(AppState { session_id, .. }): State<AppState>,
   WarPath(war_name): WarPath,
-  AuthBasic((username, password)): AuthBasic,
-  JSessionId(session_id): JSessionId,
+  AuthBasic((_, _)): AuthBasic,
+  JSessionId(local_session_id): JSessionId,
 ) -> Result<Response<Body>, Error> {
-  let auth_data = AuthData::new(session_id.clone(), username, password);
-  state.service.create_session(&auth_data).await?;
+  let session_id = session_id.map_or(local_session_id, |arc| (*arc).clone());
 
   let cookie = Cookie::build(("JSESSIONID", session_id.as_str()))
     .path(format!("/{war_name}"))
