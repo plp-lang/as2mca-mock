@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use as2mca_api::{client::Client, responses::Session};
 use axum::{
   Router,
   http::{
@@ -9,7 +10,6 @@ use axum::{
   middleware,
   routing::{get, post},
 };
-use sqlx::SqlitePool;
 use tower_http::{
   LatencyUnit,
   cors::{AllowOrigin, CorsLayer},
@@ -18,40 +18,70 @@ use tower_http::{
 use tracing::Level;
 
 use crate::{
-  application::service::ServiceImpl,
-  domain::service::Service,
   error::Error,
-  infrastructure::{config::args::Args, repositories::SqliteRepository, sqlite::create_db},
+  infrastructure::{cache::DiskCacheManager, config::args::Args},
   representation::{
     middlewares::logger::log_body,
-    routes::{api::api, api::not_found, auth::authbasic},
+    routes::{
+      api::{api, not_found},
+      auth::authbasic,
+    },
   },
 };
 
 #[derive(Clone)]
 pub struct AppState {
   pub args: Args,
-  pub service: Arc<dyn Service>,
+  pub client: Option<Arc<Client>>,
+  pub session_id: Option<Arc<String>>,
+  pub debug_pipe_name: Option<Arc<String>>,
+  pub cache: Option<Arc<DiskCacheManager>>,
 }
 
 impl AppState {
   #[must_use]
-  pub fn new(args: Args, pool: SqlitePool) -> Self {
-    let service = ServiceImpl::new(SqliteRepository::new(pool));
+  pub fn new(
+    args: Args,
+    client: Option<Client>,
+    session_id: Option<String>,
+    debug_pipe_name: Option<String>,
+    cache: Option<DiskCacheManager>,
+  ) -> Self {
     Self {
       args,
-      service: Arc::new(service),
+      client: client.map(Arc::new),
+      session_id: session_id.map(Arc::new),
+      debug_pipe_name: debug_pipe_name.map(Arc::new),
+      cache: cache.map(Arc::new),
     }
   }
 }
 
 /// # Errors
 ///
-/// Возможна ошибка подключение к базе данных: [`Error::DatabaseSQLiteError`]
-///
 /// # Panics
 pub async fn app(args: Args) -> Result<Router, Error> {
-  let pool = create_db().await?;
+  let (client, session_id, debug_pipe_name) = if args.mode.contains("proxy")
+    && let Some(ref url) = args.url
+  {
+    let client = Client::new(url)?;
+    client.authbasic(&args.username, &args.password).await?;
+    let Session {
+      session_id,
+      debug_pipe_name,
+    } = client.session_init(Some(true)).await?;
+    (Some(client), Some(session_id), Some(debug_pipe_name))
+  } else {
+    (None, None, None)
+  };
+
+  let cache = if args.mode.contains("cache") {
+    let cache = DiskCacheManager::new(args.cache_path.as_ref(), 300)?;
+    cache.load().await;
+    Some(cache)
+  } else {
+    None
+  };
 
   let origins: Vec<HeaderValue> = args
     .cors_allowed_origins
@@ -75,7 +105,7 @@ pub async fn app(args: Args) -> Result<Router, Error> {
   let router = Router::new()
     .route("/{war_name}/api", post(api))
     .route("/{war_name}/authbasic", get(authbasic))
-    .with_state(AppState::new(args, pool))
+    .with_state(AppState::new(args, client, session_id, debug_pipe_name, cache))
     .fallback(not_found)
     .layer(cors)
     .layer(middleware::from_fn(log_body))

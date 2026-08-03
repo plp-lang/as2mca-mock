@@ -1,5 +1,6 @@
 use std::str::Utf8Error;
 
+use as2mca_api::responses::{ResponseBody, ServerErrorInfo};
 use axum::{
   body::Body,
   extract::rejection::BytesRejection,
@@ -9,8 +10,6 @@ use axum::{
   },
   response::IntoResponse,
 };
-
-use crate::representation::dto::responses;
 
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
@@ -31,10 +30,10 @@ pub enum Error {
   InvalidHeaderValue(#[from] InvalidHeaderValue),
 
   #[error("{0}")]
-  MigrateError(#[from] sqlx::migrate::MigrateError),
+  As2mcaError(#[from] as2mca_api::error::Error),
 
-  #[error("SQLite database error: {0}")]
-  DatabaseSQLiteError(#[from] sqlx::Error),
+  #[error("ReDB cache error: {0}")]
+  CacheError(#[from] crate::infrastructure::cache::Error),
 
   #[error("Invalid UTF-8 sequence in the input: {0}")]
   InvalidUtf8(#[from] Utf8Error),
@@ -72,14 +71,14 @@ impl IntoResponse for Error {
         .into_response()
       }
 
-      Self::DatabaseSQLiteError(error) => {
-        tracing::error!("Database SQLite error: {}", error);
-        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), error.to_string()).into_response()
+      Self::CacheError(err) => {
+        tracing::error!("ReDB: {}", err);
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
       }
 
-      Self::MigrateError(error) => {
-        tracing::error!("Database migration error: {}", error);
-        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), error.to_string()).into_response()
+      Self::As2mcaError(err) => {
+        tracing::error!("Application Server 2 MCA error: {}", err);
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
       }
 
       Self::InvalidUtf8(err) => {
@@ -115,10 +114,10 @@ pub fn new_error(title: String, description: String) -> Result<impl IntoResponse
   let mut headers = HeaderMap::new();
   headers.insert(CONTENT_TYPE, "text/xml; charset=utf-8".parse()?);
 
-  let response = responses::Response {
-    body: responses::ResponseKind::Error(responses::Error {
+  let response = as2mca_api::responses::Response {
+    body: ResponseBody::Error(as2mca_api::responses::Error {
       text: title,
-      body: responses::ServerErrorInfo { text: description },
+      body: ServerErrorInfo { text: description },
     }),
   };
 

@@ -42,7 +42,6 @@ base64 = "0.23.0"
 hex = "0.4.3"
 clap = { version = "4.6.4", features = ["derive", "env"] }
 serde = { version = "1.0.229" }
-async-trait = "0.1.91"
 log = { version = "0.4.33", features = ["serde"] }
 tokio = { version = "1.53.1", features = ["full"] }
 tracing = { version = "0.1.44", features = ["attributes"] }
@@ -52,10 +51,13 @@ tower-http = { version = "0.7", features = ["trace", "cors"] }
 quick-xml = { version = "0.41.0", features = ["serialize"] }
 fake = { version = "5.1.0", features = ["derive"] }
 axum = "0.8.9"
-sqlx = { version = "0.9.0", features = ["runtime-tokio", "sqlite"] }
 cookie = "0.18.1"
 chrono = { version = "0.4.45", features = ["serde"] }
 shadow-rs = "2.0.0"
+as2mca-api = { path = "../as2mca-api-rs" }
+moka = { version = "0.12.15", features = ["future"] }
+sha2 = "0.11.0"
+redb = "4.1.0"
 
 [build-dependencies]
 shadow-rs = "2.0.0"
