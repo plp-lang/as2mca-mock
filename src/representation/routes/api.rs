@@ -4,8 +4,9 @@ use as2mca_api::{
     AuthenticationURL, BackwardReferences, CheckResult, ChildClasses, Class, Classes, ClientScript, Columns, Controls,
     CoreInfo, DebugText, Done, Guides, GuidesGroups, LockResult, MethodFrame, MethodParameters, MethodResult,
     MethodVariables, Methods, NotFound, NovoAllowedCheckResult, ObjectClassAndArchiveKey, OptionInfo, PipeText,
-    ProtocolInfo, Response as ResponseXML, ResponseBody, ServerInfo, Session, Setting, Settings, States, Transitions,
-    Types, User, UserContent, UserPrivileged, UserProfileProperty, Validate, ViewData, Views,
+    ProtocolInfo, Response as ResponseXML, ResponseBody, ServerInfo, Session, Setting, Settings, States,
+    SystemContextInfo, Transitions, Types, User, UserContent, UserPrivileged, UserProfileProperty, Validate, ViewData,
+    Views,
   },
 };
 use axum::{
@@ -17,7 +18,7 @@ use axum::{
   },
   response::IntoResponse,
 };
-use chrono::DateTime;
+use chrono::{DateTime, Local};
 use fake::Fake;
 use serde::{Serialize, de::DeserializeOwned};
 use tracing::warn;
@@ -26,7 +27,9 @@ use crate::{
   error::Error,
   infrastructure::{
     as2mca::reqwest_as2mca_send,
-    config::args::build::{COMMIT_AUTHOR, COMMIT_DATE, COMMIT_HASH, COMMIT_TIMESTAMP, PKG_VERSION},
+    config::args::build::{
+      COMMIT_AUTHOR, COMMIT_DATE, COMMIT_HASH, COMMIT_TIMESTAMP, PKG_DESCRIPTION, PKG_VERSION, PROJECT_NAME,
+    },
   },
   representation::{
     app::AppState,
@@ -35,10 +38,10 @@ use crate::{
       ClassViewsGet, ClassesGet, DebugTextGet, Disconnect, Filter, GuidesGet, GuidesGroupsGet, MethodBegin,
       MethodClientScriptGet, MethodControlsGet, MethodEnd, MethodExecute, MethodParametersGet, MethodValidate,
       MethodValidateDefault, MethodVariablesGet, NetworkInformationSet, NovoAllowedCheck, ObjectBackwardReferencesGet,
-      ObjectClassAndArchiveKeyGet, ObjectsLock, ObjectsUnlock, PipeTextGet, Request, RequestKind, SystemCoreInfoGet,
-      SystemNetAddressSet, SystemOptionEnabledCheck, SystemServerVersionGet, SystemSettingGet, SystemSettingsGet,
-      SystemUserPrivilegedGet, TypesGet, UserBelongsGroupCheck, UserInfoGet, UserProfilePropertyGet, ViewColumnsGet,
-      ViewDataGetCancelable,
+      ObjectClassAndArchiveKeyGet, ObjectsLock, ObjectsUnlock, PipeTextGet, Request, RequestKind, SystemContextInfoGet,
+      SystemCoreInfoGet, SystemNetAddressSet, SystemOptionEnabledCheck, SystemServerVersionGet, SystemSettingGet,
+      SystemSettingsGet, SystemUserPrivilegedGet, TypesGet, UserBelongsGroupCheck, UserInfoGet, UserProfilePropertyGet,
+      ViewColumnsGet, ViewDataGetCancelable,
     },
     middlewares::{jsessionid::JSessionId, war_path::WarPath},
   },
@@ -114,6 +117,11 @@ pub async fn api(
     RequestKind::SystemCoreInfoGet(SystemCoreInfoGet { ref session_id }) => system_core_info_get(&state, session_id)
       .await
       .map(ResponseBody::CoreInfo)?,
+    RequestKind::SystemContextInfoGet(SystemContextInfoGet { ref session_id }) => {
+      system_context_info_get(&state, session_id)
+        .await
+        .map(ResponseBody::SystemContextInfo)?
+    }
     RequestKind::UserInfoGet(UserInfoGet { ref session_id }) => user_info_get(&state, session_id)
       .await
       .map(UserContent::Info)
@@ -463,6 +471,22 @@ async fn system_core_info_get(state: &AppState, session_id: &str) -> Result<Core
         as_version: PKG_VERSION.to_string(),
         aswar_date: aswar_date.to_string(),
       },
+    };
+    Ok(info)
+  })
+  .await
+}
+
+async fn system_context_info_get(state: &AppState, session_id: &str) -> Result<SystemContextInfo, Error> {
+  cached(state, &["system_context_info_get"], || async {
+    let info = if let Some(c) = &state.as2mca {
+      c.system_context_info_get(session_id).await?
+    } else {
+      SystemContextInfo {
+        system_date: Local::now().format("%d/%m/%Y").to_string(),
+        system_name: PROJECT_NAME.to_owned(),
+        system_info: PKG_DESCRIPTION.to_owned(),
+      }
     };
     Ok(info)
   })

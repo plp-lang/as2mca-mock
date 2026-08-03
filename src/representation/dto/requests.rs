@@ -22,6 +22,8 @@ pub enum RequestKind {
   UserBelongsGroupCheck(UserBelongsGroupCheck),
   SystemServerVersionGet(SystemServerVersionGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
+  SystemContextInfoGet(SystemContextInfoGet),
+
   UserInfoGet(UserInfoGet),
   SystemUserPrivilegedGet(SystemUserPrivilegedGet),
   SystemOptionEnabledCheck(SystemOptionEnabledCheck),
@@ -106,6 +108,12 @@ pub struct SystemServerVersionGet {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SystemCoreInfoGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SystemContextInfoGet {
   #[serde(rename = "@SessionID")]
   pub session_id: String,
 }
