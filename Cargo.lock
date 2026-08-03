@@ -72,7 +72,7 @@ dependencies = [
 
 [[package]]
 name = "as2mca-api"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "quick-xml",
  "reqwest",
@@ -97,6 +97,7 @@ dependencies = [
  "moka",
  "quick-xml",
  "redb",
+ "reqwest",
  "serde",
  "sha2",
  "shadow-rs",

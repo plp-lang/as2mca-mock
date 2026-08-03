@@ -9,7 +9,7 @@ use as2mca_api::{
   },
 };
 use axum::{
-  body::Body,
+  body::{Body, Bytes},
   extract::State,
   http::{
     HeaderMap, Response, StatusCode,
@@ -20,10 +20,14 @@ use axum::{
 use chrono::DateTime;
 use fake::Fake;
 use serde::{Serialize, de::DeserializeOwned};
+use tracing::warn;
 
 use crate::{
   error::Error,
-  infrastructure::config::args::build::{COMMIT_AUTHOR, COMMIT_DATE, COMMIT_HASH, COMMIT_TIMESTAMP, PKG_VERSION},
+  infrastructure::{
+    as2mca::reqwest_as2mca_send,
+    config::args::build::{COMMIT_AUTHOR, COMMIT_DATE, COMMIT_HASH, COMMIT_TIMESTAMP, PKG_VERSION},
+  },
   representation::{
     app::AppState,
     dto::requests::{
@@ -36,18 +40,39 @@ use crate::{
       SystemUserPrivilegedGet, TypesGet, UserBelongsGroupCheck, UserInfoGet, UserProfilePropertyGet, ViewColumnsGet,
       ViewDataGetCancelable,
     },
-    middlewares::{jsessionid::JSessionId, war_path::WarPath, xml::Xml},
+    middlewares::{jsessionid::JSessionId, war_path::WarPath},
   },
 };
 
 /// # Errors
 #[allow(clippy::too_many_lines)]
 pub async fn api(
-  State(state): State<AppState>,
+  state: State<AppState>,
   WarPath(war_name): WarPath,
   JSessionId(session_id): JSessionId,
-  Xml(request): Xml<Request>,
+  body: Bytes,
 ) -> Result<Response<Body>, Error> {
+  let body_str = std::str::from_utf8(body.as_ref())?;
+  let request: Request = match quick_xml::de::from_str(body_str) {
+    Ok(req) => req,
+    Err(err) => {
+      warn!(err = %err, body = %body_str, "XML deserialization error. The server API has changed and is incompatible with the current library version. Please open an issue in the project repository and include the details below.");
+      match &state.client {
+        Some(client) if let Some(url) = &state.url => {
+          let body = reqwest_as2mca_send(url, client, body_str.to_string()).await?;
+
+          let mut headers = HeaderMap::new();
+          headers.insert(CONTENT_TYPE, "text/xml; charset=utf-8".parse()?);
+          headers.insert(CONTENT_LENGTH, format!("{}", body.len()).parse()?);
+
+          return Ok((StatusCode::OK, headers, body).into_response());
+        }
+        _ => return Ok((StatusCode::NOT_IMPLEMENTED).into_response()),
+      }
+    }
+  };
+
+  let State(state) = state;
   let body = match request.body {
     RequestKind::AuthenticationURLGet(_) => authentication_url_get(&state, &war_name)
       .await
@@ -56,9 +81,9 @@ pub async fn api(
     RequestKind::SessionInit(SessionInit {
       alive_active_session: _,
     }) => {
-      let debug_pipe_name = state.debug_pipe_name.map_or_else(
+      let debug_pipe_name = state.session.map_or_else(
         || format!("debug${:010}", (0..10_000_000_000).fake::<u64>()),
-        |arc| (*arc).clone(),
+        |arc| arc.debug_pipe_name.clone(),
       );
       ResponseBody::Session(Session {
         session_id,
@@ -353,7 +378,7 @@ pub async fn not_found() -> Result<Response<Body>, Error> {
 async fn authentication_url_get(state: &AppState, war_name: &str) -> Result<AuthenticationURL, Error> {
   cached(state, &["authentication_url_get"], || async {
     Ok(AuthenticationURL {
-      url: match &state.client {
+      url: match &state.as2mca {
         Some(c) => c.authentication_url_get().await?,
         None => format!("/{war_name}/authbasic"),
       },
@@ -365,7 +390,7 @@ async fn authentication_url_get(state: &AppState, war_name: &str) -> Result<Auth
 async fn protocol_info_get(state: &AppState) -> Result<ProtocolInfo, Error> {
   cached(state, &["protocol_info_get"], || async {
     Ok(ProtocolInfo {
-      version: match &state.client {
+      version: match &state.as2mca {
         Some(c) => c.protocol_info_get().await?,
         None => "9.54".to_string(),
       },
@@ -380,7 +405,7 @@ async fn user_profile_property_get(
   property_name: &str,
 ) -> Result<UserProfileProperty, Error> {
   cached(state, &["user_profile_property_get", property_name], || async {
-    let value = match &state.client {
+    let value = match &state.as2mca {
       Some(c) => c.user_profile_property_get(session_id, property_name).await?,
       None => String::new(),
     };
@@ -391,7 +416,7 @@ async fn user_profile_property_get(
 
 async fn user_belongs_group_check(state: &AppState, session_id: &str, group_id: &str) -> Result<CheckResult, Error> {
   cached(state, &["user_belongs_group_check", group_id], || async {
-    let value = match &state.client {
+    let value = match &state.as2mca {
       Some(c) => c.user_belongs_group_check(session_id, group_id).await?,
       None => true,
     };
@@ -403,7 +428,7 @@ async fn user_belongs_group_check(state: &AppState, session_id: &str, group_id: 
 async fn novo_allowed_check(state: &AppState, session_id: &str) -> Result<NovoAllowedCheckResult, Error> {
   cached(state, &["novo_allowed_check"], || async {
     Ok(NovoAllowedCheckResult {
-      value: match &state.client {
+      value: match &state.as2mca {
         Some(c) => c.novo_allowed_check(session_id).await?,
         None => true,
       },
@@ -415,7 +440,7 @@ async fn novo_allowed_check(state: &AppState, session_id: &str) -> Result<NovoAl
 async fn system_server_version_get(state: &AppState, session_id: &str) -> Result<ServerInfo, Error> {
   cached(state, &["system_server_version_get"], || async {
     Ok(ServerInfo {
-      version: match &state.client {
+      version: match &state.as2mca {
         Some(c) => c.system_server_version_get(session_id).await?,
         None => PKG_VERSION.to_string(),
       },
@@ -427,7 +452,7 @@ async fn system_server_version_get(state: &AppState, session_id: &str) -> Result
 async fn system_core_info_get(state: &AppState, session_id: &str) -> Result<CoreInfo, Error> {
   cached(state, &["system_core_info_get"], || async {
     let aswar_date = DateTime::parse_from_str(COMMIT_DATE, "%Y-%m-%d %H:%M:%S %:z")?.format("%d/%m/%Y %H:%M:%S");
-    let info = match &state.client {
+    let info = match &state.as2mca {
       Some(c) => c.system_core_info_get(session_id).await?,
       None => CoreInfo {
         auditor: COMMIT_AUTHOR.to_string(),
@@ -446,7 +471,7 @@ async fn system_core_info_get(state: &AppState, session_id: &str) -> Result<Core
 
 async fn user_info_get(state: &AppState, session_id: &str) -> Result<User, Error> {
   cached(state, &["user_info_get"], || async {
-    let info = match &state.client {
+    let info = match &state.as2mca {
       Some(c) => c.user_info_get(session_id).await?,
       None => User {
         short_name: "TEST".to_owned(),
@@ -461,7 +486,7 @@ async fn user_info_get(state: &AppState, session_id: &str) -> Result<User, Error
 
 async fn system_user_privileged_get(state: &AppState, session_id: &str) -> Result<UserPrivileged, Error> {
   cached(state, &["system_user_privileged_get"], || async {
-    let is_privileged = match &state.client {
+    let is_privileged = match &state.as2mca {
       Some(c) => c.system_user_privileged_get(session_id).await?,
       None => true,
     };
@@ -476,7 +501,7 @@ async fn system_option_enabled_check(
   option_name: &str,
 ) -> Result<OptionInfo, Error> {
   cached(state, &["system_option_enabled_check", option_name], || async {
-    let enabled = match &state.client {
+    let enabled = match &state.as2mca {
       Some(c) => c.system_option_enabled_check(session_id, option_name).await?,
       None => false,
     };
@@ -487,7 +512,7 @@ async fn system_option_enabled_check(
 
 async fn system_settings_get(state: &AppState, session_id: &str) -> Result<Settings, Error> {
   cached(state, &["system_settings_get"], || async {
-    let body = match &state.client {
+    let body = match &state.as2mca {
       Some(c) => c.system_settings_get(session_id).await?,
       None => vec![],
     };
@@ -498,7 +523,7 @@ async fn system_settings_get(state: &AppState, session_id: &str) -> Result<Setti
 
 async fn system_setting_get(state: &AppState, session_id: &str, name: &str) -> Result<Setting, Error> {
   cached(state, &["system_setting_get", name], || async {
-    let value = match &state.client {
+    let value = match &state.as2mca {
       Some(c) => c.system_setting_get(session_id, name).await?,
       None => None,
     };
@@ -514,7 +539,7 @@ async fn system_net_address_set(
   state: &AppState,
   req: &as2mca_api::requests::SystemNetAddressSet<'_>,
 ) -> Result<Done, Error> {
-  if let Some(ref client) = state.client {
+  if let Some(ref client) = state.as2mca {
     client.system_net_address_set(req).await?;
   }
   Ok(Done {})
@@ -524,7 +549,7 @@ async fn network_information_set(
   state: &AppState,
   req: &as2mca_api::requests::NetworkInformationSet<'_>,
 ) -> Result<Done, Error> {
-  if let Some(ref client) = state.client {
+  if let Some(ref client) = state.as2mca {
     client.network_information_set(req).await?;
   }
   Ok(Done {})
@@ -532,7 +557,7 @@ async fn network_information_set(
 
 async fn debug_text_get(state: &AppState, session_id: &str, direction: &str) -> Result<DebugText, Error> {
   cached(state, &["debug_text_get", direction], || async {
-    let value = match &state.client {
+    let value = match &state.as2mca {
       Some(c) => c.debug_text_get(session_id, direction).await?,
       None => String::new(),
     };
@@ -543,7 +568,7 @@ async fn debug_text_get(state: &AppState, session_id: &str, direction: &str) -> 
 
 async fn pipe_text_get(state: &AppState, session_id: &str, pipe_name: &str) -> Result<PipeText, Error> {
   cached(state, &["pipe_text_get"], || async {
-    let value = match &state.client {
+    let value = match &state.as2mca {
       Some(c) => c.pipe_text_get(session_id, pipe_name).await?,
       None => String::new(),
     };
@@ -554,7 +579,7 @@ async fn pipe_text_get(state: &AppState, session_id: &str, pipe_name: &str) -> R
 
 async fn types_get(state: &AppState, session_id: &str) -> Result<Types, Error> {
   cached(state, &["types_get"], || async {
-    let body = match &state.client {
+    let body = match &state.as2mca {
       Some(c) => c.types_get(session_id).await?,
       None => vec![],
     };
@@ -565,7 +590,7 @@ async fn types_get(state: &AppState, session_id: &str) -> Result<Types, Error> {
 
 async fn guides_get(state: &AppState, session_id: &str) -> Result<Guides, Error> {
   cached(state, &["guides_get"], || async {
-    let body = match &state.client {
+    let body = match &state.as2mca {
       Some(c) => c.guides_get(session_id).await?,
       None => vec![],
     };
@@ -576,7 +601,7 @@ async fn guides_get(state: &AppState, session_id: &str) -> Result<Guides, Error>
 
 async fn guides_groups_get(state: &AppState, session_id: &str) -> Result<GuidesGroups, Error> {
   cached(state, &["guides_groups_get"], || async {
-    let body = match &state.client {
+    let body = match &state.as2mca {
       Some(c) => c.guides_groups_get(session_id).await?,
       None => vec![],
     };
@@ -588,7 +613,7 @@ async fn guides_groups_get(state: &AppState, session_id: &str) -> Result<GuidesG
 async fn classes_get(state: &AppState, session_id: &str, classes: &[&str]) -> Result<Classes, Error> {
   let tags = [&["classes_get"], classes].concat();
   cached(state, &tags, || async {
-    let body = match &state.client {
+    let body = match &state.as2mca {
       Some(c) => c.classes_get(session_id, classes).await?,
       None => vec![],
     };
@@ -599,7 +624,7 @@ async fn classes_get(state: &AppState, session_id: &str, classes: &[&str]) -> Re
 
 async fn class_get(state: &AppState, session_id: &str, class_id: &str) -> Result<Option<Class>, Error> {
   cached(state, &["class_get", class_id], || async {
-    let class = match &state.client {
+    let class = match &state.as2mca {
       Some(c) => c.class_get(session_id, class_id).await?,
       None => None,
     };
@@ -614,7 +639,7 @@ async fn class_need_collection_id_check(
   class_id: &str,
 ) -> Result<CheckResult, Error> {
   cached(state, &["class_need_collection_id_check", class_id], || async {
-    let value = match &state.client {
+    let value = match &state.as2mca {
       Some(c) => c.class_need_collection_id_check(session_id, class_id).await?,
       None => false,
     };
@@ -625,7 +650,7 @@ async fn class_need_collection_id_check(
 
 async fn class_children_get(state: &AppState, session_id: &str, class_id: &str) -> Result<ChildClasses, Error> {
   cached(state, &["class_children_get", class_id], || async {
-    let child_classes = match &state.client {
+    let child_classes = match &state.as2mca {
       Some(c) => c.class_children_get(session_id, class_id).await?,
       None => vec![],
     };
@@ -636,7 +661,7 @@ async fn class_children_get(state: &AppState, session_id: &str, class_id: &str) 
 
 async fn class_states_get(state: &AppState, session_id: &str, class_id: &str) -> Result<States, Error> {
   cached(state, &["class_states_get", class_id], || async {
-    let states = match &state.client {
+    let states = match &state.as2mca {
       Some(c) => c.class_states_get(session_id, class_id).await?,
       None => vec![],
     };
@@ -647,7 +672,7 @@ async fn class_states_get(state: &AppState, session_id: &str, class_id: &str) ->
 
 async fn class_transitions_get(state: &AppState, session_id: &str, class_id: &str) -> Result<Transitions, Error> {
   cached(state, &["class_transitions_get", class_id], || async {
-    let transitions = match &state.client {
+    let transitions = match &state.as2mca {
       Some(c) => c.class_transitions_get(session_id, class_id).await?,
       None => vec![],
     };
@@ -658,7 +683,7 @@ async fn class_transitions_get(state: &AppState, session_id: &str, class_id: &st
 
 async fn class_methods_get(state: &AppState, session_id: &str, class_id: &str) -> Result<Methods, Error> {
   cached(state, &["class_methods_get", class_id], || async {
-    let body = match &state.client {
+    let body = match &state.as2mca {
       Some(c) => c.class_methods_get(session_id, class_id).await?,
       None => vec![],
     };
@@ -669,7 +694,7 @@ async fn class_methods_get(state: &AppState, session_id: &str, class_id: &str) -
 
 async fn class_views_get(state: &AppState, session_id: &str, class_id: &str) -> Result<Views, Error> {
   cached(state, &["class_views_get", class_id], || async {
-    let body = match &state.client {
+    let body = match &state.as2mca {
       Some(c) => c.class_views_get(session_id, class_id).await?,
       None => vec![],
     };
@@ -680,7 +705,7 @@ async fn class_views_get(state: &AppState, session_id: &str, class_id: &str) -> 
 
 async fn view_columns_get(state: &AppState, session_id: &str, view_id: i64) -> Result<Columns, Error> {
   cached(state, &["view_columns_get", &view_id.to_string()], || async {
-    let body = match &state.client {
+    let body = match &state.as2mca {
       Some(c) => c.view_columns_get(session_id, view_id).await?,
       None => vec![],
     };
@@ -721,7 +746,7 @@ async fn view_data_get_cancelable(
   let tags = [base_tags, objects_tags].concat();
 
   cached(state, &tags, || async {
-    let row = match &state.client {
+    let row = match &state.as2mca {
       Some(c) => c.view_data_get_cancelable(req).await?,
       None => vec![],
     };
@@ -744,7 +769,7 @@ async fn object_class_and_archive_key_get(
       base_class_id,
     ],
     || async {
-      let obj = match &state.client {
+      let obj = match &state.as2mca {
         Some(c) => {
           c.object_class_and_archive_key_get(session_id, object_id, base_class_id)
             .await?
@@ -770,7 +795,7 @@ async fn object_backward_references_get(
     state,
     &["object_backward_references_get", &object_id.to_string(), class_id],
     || async {
-      let body = match &state.client {
+      let body = match &state.as2mca {
         Some(c) => {
           c.object_backward_references_get(session_id, object_id, class_id)
             .await?
@@ -794,7 +819,7 @@ async fn objects_lock(
   let tags = [base_tags, objects_tags].concat();
 
   cached(state, &tags, || async {
-    let message = match &state.client {
+    let message = match &state.as2mca {
       Some(c) => c.objects_lock(session_id, objects).await?,
       None => None,
     };
@@ -804,7 +829,7 @@ async fn objects_lock(
 }
 
 async fn objects_unlock(state: &AppState, session_id: &str, clear_all_locks: Option<bool>) -> Result<Done, Error> {
-  if let Some(ref client) = state.client {
+  if let Some(ref client) = state.as2mca {
     client.objects_unlock(session_id, clear_all_locks).await?;
   }
   Ok(Done {})
@@ -812,7 +837,7 @@ async fn objects_unlock(state: &AppState, session_id: &str, clear_all_locks: Opt
 
 async fn method_parameters_get(state: &AppState, session_id: &str, method_id: i64) -> Result<MethodParameters, Error> {
   cached(state, &["method_parameters_get", &method_id.to_string()], || async {
-    let parameters = match &state.client {
+    let parameters = match &state.as2mca {
       Some(c) => c.method_parameters_get(session_id, method_id).await?,
       None => vec![],
     };
@@ -823,7 +848,7 @@ async fn method_parameters_get(state: &AppState, session_id: &str, method_id: i6
 
 async fn method_variables_get(state: &AppState, session_id: &str, method_id: i64) -> Result<MethodVariables, Error> {
   cached(state, &["method_variables_get", &method_id.to_string()], || async {
-    let variables = match &state.client {
+    let variables = match &state.as2mca {
       Some(c) => c.method_variables_get(session_id, method_id).await?,
       None => vec![],
     };
@@ -834,7 +859,7 @@ async fn method_variables_get(state: &AppState, session_id: &str, method_id: i64
 
 async fn method_controls_get(state: &AppState, session_id: &str, method_id: i64) -> Result<Controls, Error> {
   cached(state, &["method_controls_get", &method_id.to_string()], || async {
-    let controls = match &state.client {
+    let controls = match &state.as2mca {
       Some(c) => c.method_controls_get(session_id, method_id).await?,
       None => vec![],
     };
@@ -845,7 +870,7 @@ async fn method_controls_get(state: &AppState, session_id: &str, method_id: i64)
 
 async fn method_client_script_get(state: &AppState, session_id: &str, method_id: i64) -> Result<ClientScript, Error> {
   cached(state, &["method_client_script_get", &method_id.to_string()], || async {
-    let text = match &state.client {
+    let text = match &state.as2mca {
       Some(c) => c.method_client_script_get(session_id, method_id).await?,
       None => None,
     };
@@ -858,7 +883,7 @@ async fn method_client_script_get(state: &AppState, session_id: &str, method_id:
 
 async fn method_begin(state: &AppState, session_id: &str, method_id: i64) -> Result<MethodFrame, Error> {
   cached(state, &["method_begin", &method_id.to_string()], || async {
-    let frame_id = match &state.client {
+    let frame_id = match &state.as2mca {
       Some(c) => c.method_begin(session_id, method_id).await?,
       None => 0,
     };
@@ -871,7 +896,7 @@ async fn method_begin(state: &AppState, session_id: &str, method_id: i64) -> Res
 
 async fn method_end(state: &AppState, session_id: &str, frame_id: i64) -> Result<MethodFrame, Error> {
   cached(state, &["method_end", &frame_id.to_string()], || async {
-    let frame_id = match &state.client {
+    let frame_id = match &state.as2mca {
       Some(c) => c.method_end(session_id, frame_id).await?,
       None => None,
     };
@@ -890,7 +915,7 @@ async fn method_validate_default(
   let tags = [base_tags, objects_tags].concat();
 
   cached(state, &tags, || async {
-    let res = match &state.client {
+    let res = match &state.as2mca {
       Some(c) => c.method_validate_default(req).await?,
       None => Validate {
         object_id: None,
@@ -910,7 +935,7 @@ async fn method_validate(state: &AppState, req: &as2mca_api::requests::MethodVal
   let tags = [base_tags, objects_tags].concat();
 
   cached(state, &tags, || async {
-    let res = match &state.client {
+    let res = match &state.as2mca {
       Some(c) => c.method_validate(req).await?,
       None => Validate {
         object_id: None,
@@ -933,7 +958,7 @@ async fn method_execute(
   let tags = [base_tags, objects_tags].concat();
 
   cached(state, &tags, || async {
-    let res = match &state.client {
+    let res = match &state.as2mca {
       Some(c) => c.method_execute(req).await?,
       None => MethodResult {
         value: None,

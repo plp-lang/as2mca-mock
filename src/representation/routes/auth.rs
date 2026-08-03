@@ -19,12 +19,12 @@ use crate::{
 
 /// # Errors
 pub async fn authbasic(
-  State(AppState { session_id, .. }): State<AppState>,
+  State(AppState { session, .. }): State<AppState>,
   WarPath(war_name): WarPath,
   AuthBasic((_, _)): AuthBasic,
   JSessionId(local_session_id): JSessionId,
 ) -> Result<Response<Body>, Error> {
-  let session_id = session_id.map_or(local_session_id, |arc| (*arc).clone());
+  let session_id = session.map_or(local_session_id, |arc| arc.session_id.clone());
 
   let cookie = Cookie::build(("JSESSIONID", session_id.as_str()))
     .path(format!("/{war_name}"))

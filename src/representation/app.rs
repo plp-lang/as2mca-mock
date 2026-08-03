@@ -10,6 +10,7 @@ use axum::{
   middleware,
   routing::{get, post},
 };
+use reqwest::Url;
 use tower_http::{
   LatencyUnit,
   cors::{AllowOrigin, CorsLayer},
@@ -19,7 +20,11 @@ use tracing::Level;
 
 use crate::{
   error::Error,
-  infrastructure::{cache::DiskCacheManager, config::args::Args},
+  infrastructure::{
+    as2mca::{self, base_url, create_as2mca_client, create_as2mca_connection},
+    cache::DiskCacheManager,
+    config::args::Args,
+  },
   representation::{
     middlewares::logger::log_body,
     routes::{
@@ -32,9 +37,10 @@ use crate::{
 #[derive(Clone)]
 pub struct AppState {
   pub args: Args,
-  pub client: Option<Arc<Client>>,
-  pub session_id: Option<Arc<String>>,
-  pub debug_pipe_name: Option<Arc<String>>,
+  pub url: Option<Arc<Url>>,
+  pub client: Option<Arc<reqwest::Client>>,
+  pub as2mca: Option<Arc<Client>>,
+  pub session: Option<Arc<Session>>,
   pub cache: Option<Arc<DiskCacheManager>>,
 }
 
@@ -42,17 +48,19 @@ impl AppState {
   #[must_use]
   pub fn new(
     args: Args,
-    client: Option<Client>,
-    session_id: Option<String>,
-    debug_pipe_name: Option<String>,
+    url: Option<Url>,
+    client: Option<reqwest::Client>,
+    as2mca: Option<Client>,
+    session: Option<Session>,
     cache: Option<DiskCacheManager>,
   ) -> Self {
     Self {
       args,
-      client: client.map(Arc::new),
-      session_id: session_id.map(Arc::new),
-      debug_pipe_name: debug_pipe_name.map(Arc::new),
+      url: url.map(Arc::new),
       cache: cache.map(Arc::new),
+      client: client.map(Arc::new),
+      as2mca: as2mca.map(Arc::new),
+      session: session.map(Arc::new),
     }
   }
 }
@@ -61,27 +69,40 @@ impl AppState {
 ///
 /// # Panics
 pub async fn app(args: Args) -> Result<Router, Error> {
-  let (client, session_id, debug_pipe_name) = if args.mode.contains("proxy")
-    && let Some(ref url) = args.url
-  {
-    let client = Client::new(url)?;
-    client.authbasic(&args.username, &args.password).await?;
-    let Session {
-      session_id,
-      debug_pipe_name,
-    } = client.session_init(Some(true)).await?;
-    (Some(client), Some(session_id), Some(debug_pipe_name))
-  } else {
-    (None, None, None)
-  };
+  let url = args.url.as_ref().map(base_url).transpose()?;
 
-  let cache = if args.mode.contains("cache") {
-    let cache = DiskCacheManager::new(args.cache_path.as_ref(), 300)?;
-    cache.load().await;
-    Some(cache)
+  let client = args
+    .mode
+    .contains("proxy")
+    .then(as2mca::create_reqwest_client)
+    .transpose()?;
+
+  let as2mca = client
+    .clone()
+    .map(|c| {
+      let url = args.url.as_ref().expect("`url` is required for proxy mode");
+      create_as2mca_client(url, c)
+    })
+    .transpose()?;
+
+  let session = if let Some(ref client) = as2mca {
+    let username = args.username.as_ref().expect("`username` is required for proxy mode");
+    let password = args.password.as_ref().expect("`password` is required for proxy mode");
+    Some(create_as2mca_connection(client, username, password).await)
   } else {
     None
-  };
+  }
+  .transpose()?;
+
+  let cache = args
+    .mode
+    .contains("cache")
+    .then(|| DiskCacheManager::new(args.cache_path.as_ref(), 300))
+    .transpose()?;
+
+  if let Some(ref cache) = cache {
+    cache.load().await;
+  }
 
   let origins: Vec<HeaderValue> = args
     .cors_allowed_origins
@@ -105,7 +126,7 @@ pub async fn app(args: Args) -> Result<Router, Error> {
   let router = Router::new()
     .route("/{war_name}/api", post(api))
     .route("/{war_name}/authbasic", get(authbasic))
-    .with_state(AppState::new(args, client, session_id, debug_pipe_name, cache))
+    .with_state(AppState::new(args, url, client, as2mca, session, cache))
     .fallback(not_found)
     .layer(cors)
     .layer(middleware::from_fn(log_body))

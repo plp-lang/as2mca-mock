@@ -27,12 +27,12 @@ pub struct Args {
   pub url: Option<String>,
 
   /// Логин от пользователя сервера приложений
-  #[arg(long, env = "AS2MCA_MOCK_USERNAME", default_value = "")]
-  pub username: Box<str>,
+  #[arg(long, env = "AS2MCA_MOCK_USERNAME")]
+  pub username: Option<Box<str>>,
 
   /// Пароль от пользователя сервера приложений
-  #[arg(long, env = "AS2MCA_MOCK_PASSWORD", default_value = "")]
-  pub password: Box<str>,
+  #[arg(long, env = "AS2MCA_MOCK_PASSWORD")]
+  pub password: Option<Box<str>>,
 
   /// Пароль от пользователя сервера приложений
   #[arg(long, env = "AS2MCA_MOCK_CACHE_PATH", default_value = ".cache/cache.db")]
