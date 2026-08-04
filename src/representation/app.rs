@@ -30,6 +30,7 @@ use crate::{
     routes::{
       api::{api, not_found},
       auth::authbasic,
+      health::health,
     },
   },
 };
@@ -124,6 +125,7 @@ pub async fn app(args: Args) -> Result<Router, Error> {
     .max_age(std::time::Duration::from_mins(10));
 
   let router = Router::new()
+    .route("/health", get(health))
     .route("/{war_name}/api", post(api))
     .route("/{war_name}/authbasic", get(authbasic))
     .with_state(AppState::new(args, url, client, as2mca, session, cache))
