@@ -1,0 +1,10 @@
+.git
+.cache
+.cargo
+target
+Dockerfile
+.env*
+*.md
+.vscode
+.zed
+.idea

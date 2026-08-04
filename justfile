@@ -36,6 +36,9 @@ test:
 build: lint-fix fmt-fix test
   cargo build
 
+build-docker:
+  docker build -t as2mca-mock:dev .
+  
 dev: build
   watchexec --restart -e rs -- cargo run -- --log-filter "trace" --log-format pretty
 
