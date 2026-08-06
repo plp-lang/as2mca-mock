@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use as2mca_api::{error::Result, responses::Session};
 use axum::http::HeaderMap;
+use bytes::Bytes;
 use reqwest::{Url, header::CONTENT_TYPE};
 
 /// # Errors
@@ -35,12 +36,22 @@ pub fn create_reqwest_client() -> Result<reqwest::Client> {
 }
 
 /// # Errors
-pub async fn reqwest_as2mca_send(base_url: &Url, client: &reqwest::Client, body: String) -> Result<String> {
+pub async fn reqwest_as2mca_send(base_url: &Url, client: &reqwest::Client, body: String) -> Result<Bytes> {
   let url = base_url
     .join("/api".trim_start_matches('/'))
     .map_err(|e| as2mca_api::error::Error::UrlParseError(e.to_string()))?;
   let response = client.post(url).body(body).send().await?.error_for_status()?;
-  let text = response.text().await?;
+  let text = response.bytes().await?;
+  Ok(text)
+}
+
+/// # Errors
+pub async fn get_as2mca_sde(base_url: &Url, client: &reqwest::Client, proxy: &str) -> Result<Bytes> {
+  let url = base_url
+    .join(format!("/sde/EISclob?proxy={proxy}").trim_start_matches('/'))
+    .map_err(|e| as2mca_api::error::Error::UrlParseError(e.to_string()))?;
+  let response = client.get(url).send().await?.error_for_status()?;
+  let text = response.bytes().await?;
   Ok(text)
 }
 

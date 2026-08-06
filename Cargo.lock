@@ -73,8 +73,6 @@ dependencies = [
 [[package]]
 name = "as2mca-api"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca5cf2177c7bef747e0ef1273f6090368e82954c9880392572887f665dde07f1"
 dependencies = [
  "quick-xml",
  "reqwest",
@@ -90,6 +88,7 @@ dependencies = [
  "as2mca-api",
  "axum",
  "base64 0.23.0",
+ "bytes",
  "chrono",
  "clap",
  "cookie",

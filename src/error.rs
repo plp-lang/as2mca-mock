@@ -76,6 +76,10 @@ impl IntoResponse for Error {
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
       }
 
+      Self::As2mcaError(as2mca_api::error::Error::Api { message, details, .. }) => {
+        new_error(message, details).into_response()
+      }
+
       Self::As2mcaError(err) => {
         tracing::error!("Application Server 2 MCA error: {}", err);
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()

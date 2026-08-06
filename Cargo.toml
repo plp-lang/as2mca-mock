@@ -60,11 +60,13 @@ axum = "0.8.9"
 cookie = "0.18.1"
 chrono = { version = "0.4.45", features = ["serde"] }
 shadow-rs = "2.0.0"
-as2mca-api = "0.2.0"
+# as2mca-api = "0.2.0"
+as2mca-api = { path = "../as2mca-api-rs" }
 moka = { version = "0.12.15", features = ["future"] }
 sha2 = "0.11.0"
 redb = "4.1.0"
 reqwest = "0.13.4"
+bytes = "1.12.1"
 
 [build-dependencies]
 shadow-rs = "2.0.0"

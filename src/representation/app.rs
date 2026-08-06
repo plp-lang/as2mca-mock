@@ -31,6 +31,7 @@ use crate::{
       api::{api, not_found},
       auth::authbasic,
       health::health,
+      sde::sde,
     },
   },
 };
@@ -126,6 +127,7 @@ pub async fn app(args: Args) -> Result<Router, Error> {
 
   let router = Router::new()
     .route("/health", get(health))
+    .route("/{war_name}/sde/EISclob", get(sde))
     .route("/{war_name}/api", post(api))
     .route("/{war_name}/authbasic", get(authbasic))
     .with_state(AppState::new(args, url, client, as2mca, session, cache))

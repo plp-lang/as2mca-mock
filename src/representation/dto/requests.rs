@@ -23,6 +23,17 @@ pub enum RequestKind {
   SystemServerVersionGet(SystemServerVersionGet),
   SystemCoreInfoGet(SystemCoreInfoGet),
   SystemContextInfoGet(SystemContextInfoGet),
+  SystemInfoGet(SystemInfoGet),
+  SystemLimitGet(SystemLimitGet),
+  SystemContextGet(SystemContextGet),
+  SystemApplicationNameGet(SystemApplicationNameGet),
+  ContextInformationAvailableCheck(ContextInformationAvailableCheck),
+  SystemHelpSystemInfoGet(SystemHelpSystemInfoGet),
+  EmbeddedInteractionAvailableCheck(EmbeddedInteractionAvailableCheck),
+  EmbeddedInteractionRequiredCheck(EmbeddedInteractionRequiredCheck),
+  EmbeddedInteractionGetResource(EmbeddedInteractionGetResource),
+  EmbeddedInteractionPost(EmbeddedInteractionPost),
+  EmbeddedInteractionGet(EmbeddedInteractionGet),
 
   UserInfoGet(UserInfoGet),
   SystemUserPrivilegedGet(SystemUserPrivilegedGet),
@@ -31,10 +42,8 @@ pub enum RequestKind {
   SystemSettingGet(SystemSettingGet),
   SystemNetAddressSet(SystemNetAddressSet),
   NetworkInformationSet(NetworkInformationSet),
-
   DebugTextGet(DebugTextGet),
   PipeTextGet(PipeTextGet),
-
   TypesGet(TypesGet),
   GuidesGet(GuidesGet),
   GuidesGroupsGet(GuidesGroupsGet),
@@ -46,7 +55,6 @@ pub enum RequestKind {
   ClassTransitionsGet(ClassTransitionsGet),
   ClassViewsGet(ClassViewsGet),
   ClassMethodsGet(ClassMethodsGet),
-
   ViewColumnsGet(ViewColumnsGet),
   ViewDataGetCancelable(ViewDataGetCancelable),
 
@@ -54,7 +62,6 @@ pub enum RequestKind {
   ObjectBackwardReferencesGet(ObjectBackwardReferencesGet),
   ObjectsLock(ObjectsLock),
   ObjectsUnlock(ObjectsUnlock),
-
   MethodParametersGet(MethodParametersGet),
   MethodVariablesGet(MethodVariablesGet),
   MethodControlsGet(MethodControlsGet),
@@ -116,6 +123,86 @@ pub struct SystemCoreInfoGet {
 pub struct SystemContextInfoGet {
   #[serde(rename = "@SessionID")]
   pub session_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SystemInfoGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+  #[serde(rename = "@ParameterName")]
+  pub parameter_name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SystemLimitGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+  #[serde(rename = "@LimitName")]
+  pub limit_name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SystemContextGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+  #[serde(rename = "@Namespace")]
+  pub namespace: String,
+  #[serde(rename = "@AttributeName")]
+  pub attribute_name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SystemApplicationNameGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ContextInformationAvailableCheck {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SystemHelpSystemInfoGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EmbeddedInteractionAvailableCheck {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EmbeddedInteractionRequiredCheck {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EmbeddedInteractionGetResource {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+  #[serde(rename = "@ErrorResponseType", default, skip_serializing_if = "Option::is_none")]
+  pub error_response_type: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EmbeddedInteractionPost {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+  #[serde(rename = "@Request", default, skip_serializing_if = "Option::is_none")]
+  pub request: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EmbeddedInteractionGet {
+  #[serde(rename = "@SessionID")]
+  pub session_id: String,
+  #[serde(rename = "@Request", default, skip_serializing_if = "Option::is_none")]
+  pub request: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

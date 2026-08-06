@@ -1,12 +1,12 @@
 use as2mca_api::{
   requests::{SessionInit, XML_HEADER},
   responses::{
-    AuthenticationURL, BackwardReferences, CheckResult, ChildClasses, Class, Classes, ClientScript, Columns, Controls,
-    CoreInfo, DebugText, Done, Guides, GuidesGroups, LockResult, MethodFrame, MethodParameters, MethodResult,
-    MethodVariables, Methods, NotFound, NovoAllowedCheckResult, ObjectClassAndArchiveKey, OptionInfo, PipeText,
-    ProtocolInfo, Response as ResponseXML, ResponseBody, ServerInfo, Session, Setting, Settings, States,
-    SystemContextInfo, Transitions, Types, User, UserContent, UserPrivileged, UserProfileProperty, Validate, ViewData,
-    Views,
+    Application, Attribute, AuthenticationURL, BackwardReferences, CheckResult, ChildClasses, Class, Classes,
+    ClientScript, Columns, Controls, CoreInfo, DebugText, Done, Guides, GuidesGroups, HelpSystemInfo, Limit,
+    LockResult, MethodFrame, MethodParameters, MethodResult, MethodVariables, Methods, NotFound,
+    NovoAllowedCheckResult, ObjectClassAndArchiveKey, OptionInfo, PipeText, ProtocolInfo, Response as ResponseXML,
+    ResponseBody, ServerInfo, Session, Setting, Settings, States, StreamData, SystemContextInfo, SystemInfo,
+    Transitions, Types, User, UserContent, UserPrivileged, UserProfileProperty, Validate, ViewData, Views,
   },
 };
 use axum::{
@@ -35,13 +35,16 @@ use crate::{
     app::AppState,
     dto::requests::{
       ClassChildrenGet, ClassGet, ClassMethodsGet, ClassNeedCollectionIDCheck, ClassStatesGet, ClassTransitionsGet,
-      ClassViewsGet, ClassesGet, DebugTextGet, Disconnect, Filter, GuidesGet, GuidesGroupsGet, MethodBegin,
+      ClassViewsGet, ClassesGet, ContextInformationAvailableCheck, DebugTextGet, Disconnect,
+      EmbeddedInteractionAvailableCheck, EmbeddedInteractionGet, EmbeddedInteractionGetResource,
+      EmbeddedInteractionPost, EmbeddedInteractionRequiredCheck, Filter, GuidesGet, GuidesGroupsGet, MethodBegin,
       MethodClientScriptGet, MethodControlsGet, MethodEnd, MethodExecute, MethodParametersGet, MethodValidate,
       MethodValidateDefault, MethodVariablesGet, NetworkInformationSet, NovoAllowedCheck, ObjectBackwardReferencesGet,
-      ObjectClassAndArchiveKeyGet, ObjectsLock, ObjectsUnlock, PipeTextGet, Request, RequestKind, SystemContextInfoGet,
-      SystemCoreInfoGet, SystemNetAddressSet, SystemOptionEnabledCheck, SystemServerVersionGet, SystemSettingGet,
-      SystemSettingsGet, SystemUserPrivilegedGet, TypesGet, UserBelongsGroupCheck, UserInfoGet, UserProfilePropertyGet,
-      ViewColumnsGet, ViewDataGetCancelable,
+      ObjectClassAndArchiveKeyGet, ObjectsLock, ObjectsUnlock, PipeTextGet, Request, RequestKind,
+      SystemApplicationNameGet, SystemContextGet, SystemContextInfoGet, SystemCoreInfoGet, SystemHelpSystemInfoGet,
+      SystemInfoGet, SystemLimitGet, SystemNetAddressSet, SystemOptionEnabledCheck, SystemServerVersionGet,
+      SystemSettingGet, SystemSettingsGet, SystemUserPrivilegedGet, TypesGet, UserBelongsGroupCheck, UserInfoGet,
+      UserProfilePropertyGet, ViewColumnsGet, ViewDataGetCancelable,
     },
     middlewares::{jsessionid::JSessionId, war_path::WarPath},
   },
@@ -179,6 +182,68 @@ pub async fn api(
     )
     .await
     .map(ResponseBody::Done)?,
+    RequestKind::SystemInfoGet(SystemInfoGet {
+      ref session_id,
+      ref parameter_name,
+    }) => system_info_get(&state, session_id, parameter_name)
+      .await
+      .map(ResponseBody::SystemInfo)?,
+    RequestKind::SystemLimitGet(SystemLimitGet {
+      ref session_id,
+      ref limit_name,
+    }) => system_limit_get(&state, session_id, limit_name)
+      .await
+      .map(ResponseBody::Limit)?,
+    RequestKind::SystemContextGet(SystemContextGet {
+      ref session_id,
+      ref namespace,
+      ref attribute_name,
+    }) => system_context_get(&state, session_id, namespace, attribute_name)
+      .await
+      .map(ResponseBody::Attribute)?,
+    RequestKind::SystemApplicationNameGet(SystemApplicationNameGet { ref session_id }) => {
+      system_application_name_get(&state, session_id)
+        .await
+        .map(ResponseBody::Application)?
+    }
+    RequestKind::ContextInformationAvailableCheck(ContextInformationAvailableCheck { ref session_id }) => {
+      context_information_available_check(&state, session_id)
+        .await
+        .map(ResponseBody::CheckResult)?
+    }
+    RequestKind::SystemHelpSystemInfoGet(SystemHelpSystemInfoGet { ref session_id }) => {
+      system_help_system_info_get(&state, session_id)
+        .await
+        .map(ResponseBody::HelpSystemInfo)?
+    }
+    RequestKind::EmbeddedInteractionAvailableCheck(EmbeddedInteractionAvailableCheck { ref session_id }) => {
+      embedded_interaction_available_check(&state, session_id)
+        .await
+        .map(ResponseBody::CheckResult)?
+    }
+    RequestKind::EmbeddedInteractionRequiredCheck(EmbeddedInteractionRequiredCheck { ref session_id }) => {
+      embedded_interaction_required_check(&state, session_id)
+        .await
+        .map(ResponseBody::CheckResult)?
+    }
+    RequestKind::EmbeddedInteractionGetResource(EmbeddedInteractionGetResource {
+      ref session_id,
+      ref error_response_type,
+    }) => embedded_interaction_get_resource(&state, session_id, error_response_type.as_deref())
+      .await
+      .map(ResponseBody::StreamData)?,
+    RequestKind::EmbeddedInteractionPost(EmbeddedInteractionPost {
+      ref session_id,
+      request,
+    }) => embedded_interaction_post(&state, session_id, &request.unwrap_or(String::new()))
+      .await
+      .map(ResponseBody::Done)?,
+    RequestKind::EmbeddedInteractionGet(EmbeddedInteractionGet {
+      ref session_id,
+      request,
+    }) => embedded_interaction_get(&state, session_id, &request.unwrap_or(String::new()))
+      .await
+      .map(ResponseBody::CheckResult)?,
     RequestKind::PipeTextGet(PipeTextGet {
       ref session_id,
       ref pipe_name,
@@ -426,7 +491,7 @@ async fn user_belongs_group_check(state: &AppState, session_id: &str, group_id: 
   cached(state, &["user_belongs_group_check", group_id], || async {
     let value = match &state.as2mca {
       Some(c) => c.user_belongs_group_check(session_id, group_id).await?,
-      None => true,
+      None => String::new(),
     };
     Ok(CheckResult { value })
   })
@@ -579,6 +644,140 @@ async fn network_information_set(
   Ok(Done {})
 }
 
+async fn system_info_get(state: &AppState, session_id: &str, parameter_name: &str) -> Result<SystemInfo, Error> {
+  cached(state, &["system_info_get", parameter_name], || async {
+    let value = match &state.as2mca {
+      Some(c) => c.system_info_get(session_id, parameter_name).await?,
+      None => None,
+    };
+    Ok(SystemInfo { value })
+  })
+  .await
+}
+
+async fn system_limit_get(state: &AppState, session_id: &str, limit_name: &str) -> Result<Limit, Error> {
+  cached(state, &["system_limit_get", limit_name], || async {
+    let value = match &state.as2mca {
+      Some(c) => c.system_limit_get(session_id, limit_name).await?,
+      None => String::new(),
+    };
+    Ok(Limit { value })
+  })
+  .await
+}
+
+async fn system_context_get(
+  state: &AppState,
+  session_id: &str,
+  namespace: &str,
+  attribute_name: &str,
+) -> Result<Attribute, Error> {
+  cached(state, &["system_context_get", namespace, attribute_name], || async {
+    let value = match &state.as2mca {
+      Some(c) => c.system_context_get(session_id, namespace, attribute_name).await?,
+      None => None,
+    };
+    Ok(Attribute { value })
+  })
+  .await
+}
+
+async fn system_application_name_get(state: &AppState, session_id: &str) -> Result<Application, Error> {
+  cached(state, &["system_application_name_get"], || async {
+    let name = match &state.as2mca {
+      Some(c) => c.system_application_name_get(session_id).await?,
+      None => PROJECT_NAME.to_string(),
+    };
+    Ok(Application { name })
+  })
+  .await
+}
+
+async fn context_information_available_check(state: &AppState, session_id: &str) -> Result<CheckResult, Error> {
+  cached(state, &["context_information_available_check"], || async {
+    let value = match &state.as2mca {
+      Some(c) => c.context_information_available_check(session_id).await?,
+      None => String::new(),
+    };
+    Ok(CheckResult { value })
+  })
+  .await
+}
+
+async fn system_help_system_info_get(state: &AppState, session_id: &str) -> Result<HelpSystemInfo, Error> {
+  cached(state, &["system_help_system_info_get"], || async {
+    let items_count = match &state.as2mca {
+      Some(c) => c.system_help_system_info_get(session_id).await?,
+      None => 0,
+    };
+    Ok(HelpSystemInfo { items_count })
+  })
+  .await
+}
+
+async fn embedded_interaction_available_check(state: &AppState, session_id: &str) -> Result<CheckResult, Error> {
+  cached(state, &["embedded_interaction_available_check"], || async {
+    let value = match &state.as2mca {
+      Some(c) => c.embedded_interaction_available_check(session_id).await?,
+      None => String::new(),
+    };
+    Ok(CheckResult { value })
+  })
+  .await
+}
+
+async fn embedded_interaction_required_check(state: &AppState, session_id: &str) -> Result<CheckResult, Error> {
+  cached(state, &["embedded_interaction_required_check"], || async {
+    let value = match &state.as2mca {
+      Some(c) => c.embedded_interaction_required_check(session_id).await?,
+      None => String::new(),
+    };
+    Ok(CheckResult { value })
+  })
+  .await
+}
+
+async fn embedded_interaction_get_resource(
+  state: &AppState,
+  session_id: &str,
+  error_response_type: Option<&str>,
+) -> Result<StreamData, Error> {
+  let mut tags = vec!["embedded_interaction_get_resource"];
+  if let Some(err) = error_response_type {
+    tags.push(err);
+  }
+
+  cached(state, &tags, || async {
+    let url = match &state.as2mca {
+      Some(c) => {
+        c.embedded_interaction_get_resource(session_id, error_response_type)
+          .await?
+      }
+      None => String::new(),
+    };
+    Ok(StreamData { url })
+  })
+  .await
+}
+
+async fn embedded_interaction_post(state: &AppState, session_id: &str, request: &str) -> Result<Done, Error> {
+  if let Some(ref client) = state.as2mca {
+    client.embedded_interaction_post(session_id, request).await?;
+  }
+  Ok(Done {})
+}
+
+async fn embedded_interaction_get(state: &AppState, session_id: &str, request: &str) -> Result<CheckResult, Error> {
+  cached(state, &["embedded_interaction_get"], || async {
+    let value = match &state.as2mca {
+      Some(c) => c.embedded_interaction_get(session_id, request).await?,
+      None => String::new(),
+    };
+    Ok(CheckResult { value })
+  })
+  .await
+}
+
 async fn debug_text_get(state: &AppState, session_id: &str, direction: &str) -> Result<DebugText, Error> {
   cached(state, &["debug_text_get", direction], || async {
     let value = match &state.as2mca {
@@ -665,7 +864,7 @@ async fn class_need_collection_id_check(
   cached(state, &["class_need_collection_id_check", class_id], || async {
     let value = match &state.as2mca {
       Some(c) => c.class_need_collection_id_check(session_id, class_id).await?,
-      None => false,
+      None => String::new(),
     };
     Ok(CheckResult { value })
   })
