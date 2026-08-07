@@ -70,7 +70,7 @@ impl AppState {
 /// # Errors
 ///
 /// # Panics
-pub async fn app(args: Args) -> Result<Router, Error> {
+pub async fn app(args: Args, cache: Option<DiskCacheManager>) -> Result<Router, Error> {
   let url = args.url.as_ref().map(base_url).transpose()?;
 
   let client = args
@@ -95,16 +95,6 @@ pub async fn app(args: Args) -> Result<Router, Error> {
     None
   }
   .transpose()?;
-
-  let cache = args
-    .mode
-    .contains("cache")
-    .then(|| DiskCacheManager::new(args.cache_path.as_ref(), 300))
-    .transpose()?;
-
-  if let Some(ref cache) = cache {
-    cache.load().await;
-  }
 
   let origins: Vec<HeaderValue> = args
     .cors_allowed_origins
@@ -145,6 +135,5 @@ pub async fn app(args: Args) -> Result<Router, Error> {
         )
         .on_failure(DefaultOnFailure::new().level(Level::ERROR)),
     );
-
   Ok(router)
 }

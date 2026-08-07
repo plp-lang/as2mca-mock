@@ -640,7 +640,6 @@ impl MethodValidateDefault {
   #[must_use]
   pub fn extract_all_strings(m: &as2mca_api::requests::MethodValidateDefault<'_>) -> Vec<String> {
     let mut strings = vec![
-      m.session_id.to_string(),
       m.method_id.to_string(),
       m.info.to_string(),
       m.do_commit.to_string(),

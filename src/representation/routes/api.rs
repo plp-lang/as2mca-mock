@@ -1,4 +1,5 @@
 use as2mca_api::{
+  client::Client,
   requests::{SessionInit, XML_HEADER},
   responses::{
     Application, Attribute, AuthenticationURL, BackwardReferences, CheckResult, ChildClasses, Class, Classes,
@@ -449,26 +450,32 @@ pub async fn not_found() -> Result<Response<Body>, Error> {
 }
 
 async fn authentication_url_get(state: &AppState, war_name: &str) -> Result<AuthenticationURL, Error> {
-  cached(state, &["authentication_url_get"], || async {
-    Ok(AuthenticationURL {
-      url: match &state.as2mca {
-        Some(c) => c.authentication_url_get().await?,
-        None => format!("/{war_name}/authbasic"),
-      },
-    })
-  })
+  cached(
+    state,
+    &["authentication_url_get"],
+    move |client| async move {
+      let url = client.authentication_url_get().await?;
+      Ok(AuthenticationURL { url })
+    },
+    move || AuthenticationURL {
+      url: format!("/{war_name}/authbasic"),
+    },
+  )
   .await
 }
 
 async fn protocol_info_get(state: &AppState) -> Result<ProtocolInfo, Error> {
-  cached(state, &["protocol_info_get"], || async {
-    Ok(ProtocolInfo {
-      version: match &state.as2mca {
-        Some(c) => c.protocol_info_get().await?,
-        None => "9.54".to_string(),
-      },
-    })
-  })
+  cached(
+    state,
+    &["protocol_info_get"],
+    move |client| async move {
+      let version = client.protocol_info_get().await?;
+      Ok(ProtocolInfo { version })
+    },
+    || ProtocolInfo {
+      version: "9.54".to_string(),
+    },
+  )
   .await
 }
 
@@ -477,110 +484,119 @@ async fn user_profile_property_get(
   session_id: &str,
   property_name: &str,
 ) -> Result<UserProfileProperty, Error> {
-  cached(state, &["user_profile_property_get", property_name], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.user_profile_property_get(session_id, property_name).await?,
-      None => String::new(),
-    };
-    Ok(UserProfileProperty { value })
-  })
+  cached(
+    state,
+    &["user_profile_property_get", property_name],
+    move |client| async move {
+      let value = client.user_profile_property_get(session_id, property_name).await?;
+      Ok(UserProfileProperty { value })
+    },
+    || UserProfileProperty { value: String::new() },
+  )
   .await
 }
 
 async fn user_belongs_group_check(state: &AppState, session_id: &str, group_id: &str) -> Result<CheckResult, Error> {
-  cached(state, &["user_belongs_group_check", group_id], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.user_belongs_group_check(session_id, group_id).await?,
-      None => String::new(),
-    };
-    Ok(CheckResult { value })
-  })
+  cached(
+    state,
+    &["user_belongs_group_check", group_id],
+    move |client| async move {
+      let value = client.user_belongs_group_check(session_id, group_id).await?;
+      Ok(CheckResult { value })
+    },
+    || CheckResult { value: String::new() },
+  )
   .await
 }
 
 async fn novo_allowed_check(state: &AppState, session_id: &str) -> Result<NovoAllowedCheckResult, Error> {
-  cached(state, &["novo_allowed_check"], || async {
-    Ok(NovoAllowedCheckResult {
-      value: match &state.as2mca {
-        Some(c) => c.novo_allowed_check(session_id).await?,
-        None => true,
-      },
-    })
-  })
+  cached(
+    state,
+    &["novo_allowed_check"],
+    move |client| async move {
+      let value = client.novo_allowed_check(session_id).await?;
+      Ok(NovoAllowedCheckResult { value })
+    },
+    || NovoAllowedCheckResult { value: true },
+  )
   .await
 }
 
 async fn system_server_version_get(state: &AppState, session_id: &str) -> Result<ServerInfo, Error> {
-  cached(state, &["system_server_version_get"], || async {
-    Ok(ServerInfo {
-      version: match &state.as2mca {
-        Some(c) => c.system_server_version_get(session_id).await?,
-        None => PKG_VERSION.to_string(),
-      },
-    })
-  })
+  cached(
+    state,
+    &["system_server_version_get"],
+    move |client| async move {
+      let version = client.system_server_version_get(session_id).await?;
+      Ok(ServerInfo { version })
+    },
+    || ServerInfo {
+      version: PKG_VERSION.to_string(),
+    },
+  )
   .await
 }
 
 async fn system_core_info_get(state: &AppState, session_id: &str) -> Result<CoreInfo, Error> {
-  cached(state, &["system_core_info_get"], || async {
-    let aswar_date = DateTime::parse_from_str(COMMIT_DATE, "%Y-%m-%d %H:%M:%S %:z")?.format("%d/%m/%Y %H:%M:%S");
-    let info = match &state.as2mca {
-      Some(c) => c.system_core_info_get(session_id).await?,
-      None => CoreInfo {
-        auditor: COMMIT_AUTHOR.to_string(),
-        owner: COMMIT_AUTHOR.to_string(),
-        version: PKG_VERSION.to_string(),
-        build: COMMIT_TIMESTAMP.to_string(),
-        revision: COMMIT_HASH.to_owned(),
-        as_version: PKG_VERSION.to_string(),
-        aswar_date: aswar_date.to_string(),
-      },
-    };
-    Ok(info)
-  })
+  let aswar_date = DateTime::parse_from_str(COMMIT_DATE, "%Y-%m-%d %H:%M:%S %:z")?
+    .format("%d/%m/%Y %H:%M:%S")
+    .to_string();
+
+  cached(
+    state,
+    &["system_core_info_get"],
+    move |client| async move { client.system_core_info_get(session_id).await },
+    move || CoreInfo {
+      auditor: COMMIT_AUTHOR.to_string(),
+      owner: COMMIT_AUTHOR.to_string(),
+      version: PKG_VERSION.to_string(),
+      build: COMMIT_TIMESTAMP.to_string(),
+      revision: COMMIT_HASH.to_owned(),
+      as_version: PKG_VERSION.to_string(),
+      aswar_date,
+    },
+  )
   .await
 }
 
 async fn system_context_info_get(state: &AppState, session_id: &str) -> Result<SystemContextInfo, Error> {
-  cached(state, &["system_context_info_get"], || async {
-    let info = if let Some(c) = &state.as2mca {
-      c.system_context_info_get(session_id).await?
-    } else {
-      SystemContextInfo {
-        system_date: Local::now().format("%d/%m/%Y").to_string(),
-        system_name: PROJECT_NAME.to_owned(),
-        system_info: PKG_DESCRIPTION.to_owned(),
-      }
-    };
-    Ok(info)
-  })
+  cached(
+    state,
+    &["system_context_info_get"],
+    move |client| async move { client.system_context_info_get(session_id).await },
+    || SystemContextInfo {
+      system_date: Local::now().format("%d/%m/%Y").to_string(),
+      system_name: PROJECT_NAME.to_owned(),
+      system_info: PKG_DESCRIPTION.to_owned(),
+    },
+  )
   .await
 }
 
 async fn user_info_get(state: &AppState, session_id: &str) -> Result<User, Error> {
-  cached(state, &["user_info_get"], || async {
-    let info = match &state.as2mca {
-      Some(c) => c.user_info_get(session_id).await?,
-      None => User {
-        short_name: "TEST".to_owned(),
-        name: "Тест Тест Тестович".to_owned(),
-        properties: "|ADMIN|CONTEXT|PICKER|PROFILE DEFAULT|SESSION|".to_owned(),
-      },
-    };
-    Ok(info)
-  })
+  cached(
+    state,
+    &["user_info_get"],
+    move |client| async move { client.user_info_get(session_id).await },
+    || User {
+      short_name: "TEST".to_owned(),
+      name: "Тест Тест Тестович".to_owned(),
+      properties: "|ADMIN|CONTEXT|PICKER|PROFILE DEFAULT|SESSION|".to_owned(),
+    },
+  )
   .await
 }
 
 async fn system_user_privileged_get(state: &AppState, session_id: &str) -> Result<UserPrivileged, Error> {
-  cached(state, &["system_user_privileged_get"], || async {
-    let is_privileged = match &state.as2mca {
-      Some(c) => c.system_user_privileged_get(session_id).await?,
-      None => true,
-    };
-    Ok(UserPrivileged { is_privileged })
-  })
+  cached(
+    state,
+    &["system_user_privileged_get"],
+    move |client| async move {
+      let is_privileged = client.system_user_privileged_get(session_id).await?;
+      Ok(UserPrivileged { is_privileged })
+    },
+    || UserPrivileged { is_privileged: true },
+  )
   .await
 }
 
@@ -589,38 +605,47 @@ async fn system_option_enabled_check(
   session_id: &str,
   option_name: &str,
 ) -> Result<OptionInfo, Error> {
-  cached(state, &["system_option_enabled_check", option_name], || async {
-    let enabled = match &state.as2mca {
-      Some(c) => c.system_option_enabled_check(session_id, option_name).await?,
-      None => false,
-    };
-    Ok(OptionInfo { enabled })
-  })
+  cached(
+    state,
+    &["system_option_enabled_check", option_name],
+    move |client| async move {
+      let enabled = client.system_option_enabled_check(session_id, option_name).await?;
+      Ok(OptionInfo { enabled })
+    },
+    || OptionInfo { enabled: false },
+  )
   .await
 }
 
 async fn system_settings_get(state: &AppState, session_id: &str) -> Result<Settings, Error> {
-  cached(state, &["system_settings_get"], || async {
-    let body = match &state.as2mca {
-      Some(c) => c.system_settings_get(session_id).await?,
-      None => vec![],
-    };
-    Ok(Settings { body })
-  })
+  cached(
+    state,
+    &["system_settings_get"],
+    move |client| async move {
+      let body = client.system_settings_get(session_id).await?;
+      Ok(Settings { body })
+    },
+    || Settings { body: vec![] },
+  )
   .await
 }
 
 async fn system_setting_get(state: &AppState, session_id: &str, name: &str) -> Result<Setting, Error> {
-  cached(state, &["system_setting_get", name], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.system_setting_get(session_id, name).await?,
-      None => None,
-    };
-    Ok(Setting {
+  cached(
+    state,
+    &["system_setting_get", name],
+    move |client| async move {
+      let value = client.system_setting_get(session_id, name).await?;
+      Ok(Setting {
+        name: name.to_owned(),
+        value,
+      })
+    },
+    move || Setting {
       name: name.to_owned(),
-      value,
-    })
-  })
+      value: None,
+    },
+  )
   .await
 }
 
@@ -628,7 +653,7 @@ async fn system_net_address_set(
   state: &AppState,
   req: &as2mca_api::requests::SystemNetAddressSet<'_>,
 ) -> Result<Done, Error> {
-  if let Some(ref client) = state.as2mca {
+  if let Some(client) = &state.as2mca {
     client.system_net_address_set(req).await?;
   }
   Ok(Done {})
@@ -638,31 +663,35 @@ async fn network_information_set(
   state: &AppState,
   req: &as2mca_api::requests::NetworkInformationSet<'_>,
 ) -> Result<Done, Error> {
-  if let Some(ref client) = state.as2mca {
+  if let Some(client) = &state.as2mca {
     client.network_information_set(req).await?;
   }
   Ok(Done {})
 }
 
 async fn system_info_get(state: &AppState, session_id: &str, parameter_name: &str) -> Result<SystemInfo, Error> {
-  cached(state, &["system_info_get", parameter_name], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.system_info_get(session_id, parameter_name).await?,
-      None => None,
-    };
-    Ok(SystemInfo { value })
-  })
+  cached(
+    state,
+    &["system_info_get", parameter_name],
+    move |client| async move {
+      let value = client.system_info_get(session_id, parameter_name).await?;
+      Ok(SystemInfo { value })
+    },
+    || SystemInfo { value: None },
+  )
   .await
 }
 
 async fn system_limit_get(state: &AppState, session_id: &str, limit_name: &str) -> Result<Limit, Error> {
-  cached(state, &["system_limit_get", limit_name], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.system_limit_get(session_id, limit_name).await?,
-      None => String::new(),
-    };
-    Ok(Limit { value })
-  })
+  cached(
+    state,
+    &["system_limit_get", limit_name],
+    move |client| async move {
+      let value = client.system_limit_get(session_id, limit_name).await?;
+      Ok(Limit { value })
+    },
+    || Limit { value: String::new() },
+  )
   .await
 }
 
@@ -672,68 +701,82 @@ async fn system_context_get(
   namespace: &str,
   attribute_name: &str,
 ) -> Result<Attribute, Error> {
-  cached(state, &["system_context_get", namespace, attribute_name], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.system_context_get(session_id, namespace, attribute_name).await?,
-      None => None,
-    };
-    Ok(Attribute { value })
-  })
+  cached(
+    state,
+    &["system_context_get", namespace, attribute_name],
+    move |client| async move {
+      let value = client.system_context_get(session_id, namespace, attribute_name).await?;
+      Ok(Attribute { value })
+    },
+    || Attribute { value: None },
+  )
   .await
 }
 
 async fn system_application_name_get(state: &AppState, session_id: &str) -> Result<Application, Error> {
-  cached(state, &["system_application_name_get"], || async {
-    let name = match &state.as2mca {
-      Some(c) => c.system_application_name_get(session_id).await?,
-      None => PROJECT_NAME.to_string(),
-    };
-    Ok(Application { name })
-  })
+  cached(
+    state,
+    &["system_application_name_get"],
+    move |client| async move {
+      let name = client.system_application_name_get(session_id).await?;
+      Ok(Application { name })
+    },
+    || Application {
+      name: PROJECT_NAME.to_string(),
+    },
+  )
   .await
 }
 
 async fn context_information_available_check(state: &AppState, session_id: &str) -> Result<CheckResult, Error> {
-  cached(state, &["context_information_available_check"], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.context_information_available_check(session_id).await?,
-      None => String::new(),
-    };
-    Ok(CheckResult { value })
-  })
+  cached(
+    state,
+    &["context_information_available_check"],
+    move |client| async move {
+      let value = client.context_information_available_check(session_id).await?;
+      Ok(CheckResult { value })
+    },
+    || CheckResult { value: String::new() },
+  )
   .await
 }
 
 async fn system_help_system_info_get(state: &AppState, session_id: &str) -> Result<HelpSystemInfo, Error> {
-  cached(state, &["system_help_system_info_get"], || async {
-    let items_count = match &state.as2mca {
-      Some(c) => c.system_help_system_info_get(session_id).await?,
-      None => 0,
-    };
-    Ok(HelpSystemInfo { items_count })
-  })
+  cached(
+    state,
+    &["system_help_system_info_get"],
+    move |client| async move {
+      let items_count = client.system_help_system_info_get(session_id).await?;
+      Ok(HelpSystemInfo { items_count })
+    },
+    || HelpSystemInfo { items_count: 0 },
+  )
   .await
 }
 
 async fn embedded_interaction_available_check(state: &AppState, session_id: &str) -> Result<CheckResult, Error> {
-  cached(state, &["embedded_interaction_available_check"], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.embedded_interaction_available_check(session_id).await?,
-      None => String::new(),
-    };
-    Ok(CheckResult { value })
-  })
+  cached(
+    state,
+    &["embedded_interaction_available_check"],
+    move |client| async move {
+      let value = client.embedded_interaction_available_check(session_id).await?;
+      Ok(CheckResult { value })
+    },
+    || CheckResult { value: String::new() },
+  )
   .await
 }
 
 async fn embedded_interaction_required_check(state: &AppState, session_id: &str) -> Result<CheckResult, Error> {
-  cached(state, &["embedded_interaction_required_check"], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.embedded_interaction_required_check(session_id).await?,
-      None => String::new(),
-    };
-    Ok(CheckResult { value })
-  })
+  cached(
+    state,
+    &["embedded_interaction_required_check"],
+    move |client| async move {
+      let value = client.embedded_interaction_required_check(session_id).await?;
+      Ok(CheckResult { value })
+    },
+    || CheckResult { value: String::new() },
+  )
   .await
 }
 
@@ -747,112 +790,128 @@ async fn embedded_interaction_get_resource(
     tags.push(err);
   }
 
-  cached(state, &tags, || async {
-    let url = match &state.as2mca {
-      Some(c) => {
-        c.embedded_interaction_get_resource(session_id, error_response_type)
-          .await?
-      }
-      None => String::new(),
-    };
-    Ok(StreamData { url })
-  })
+  cached(
+    state,
+    &tags,
+    move |client| async move {
+      let url = client
+        .embedded_interaction_get_resource(session_id, error_response_type)
+        .await?;
+      Ok(StreamData { url })
+    },
+    || StreamData { url: String::new() },
+  )
   .await
 }
 
 async fn embedded_interaction_post(state: &AppState, session_id: &str, request: &str) -> Result<Done, Error> {
-  if let Some(ref client) = state.as2mca {
+  if let Some(client) = &state.as2mca {
     client.embedded_interaction_post(session_id, request).await?;
   }
   Ok(Done {})
 }
 
 async fn embedded_interaction_get(state: &AppState, session_id: &str, request: &str) -> Result<CheckResult, Error> {
-  cached(state, &["embedded_interaction_get"], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.embedded_interaction_get(session_id, request).await?,
-      None => String::new(),
-    };
-    Ok(CheckResult { value })
-  })
+  cached(
+    state,
+    &["embedded_interaction_get"],
+    move |client| async move {
+      let value = client.embedded_interaction_get(session_id, request).await?;
+      Ok(CheckResult { value })
+    },
+    || CheckResult { value: String::new() },
+  )
   .await
 }
 
 async fn debug_text_get(state: &AppState, session_id: &str, direction: &str) -> Result<DebugText, Error> {
-  cached(state, &["debug_text_get", direction], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.debug_text_get(session_id, direction).await?,
-      None => String::new(),
-    };
-    Ok(DebugText { value })
-  })
+  cached(
+    state,
+    &["debug_text_get", direction],
+    move |client| async move {
+      let value = client.debug_text_get(session_id, direction).await?;
+      Ok(DebugText { value })
+    },
+    || DebugText { value: String::new() },
+  )
   .await
 }
 
 async fn pipe_text_get(state: &AppState, session_id: &str, pipe_name: &str) -> Result<PipeText, Error> {
-  cached(state, &["pipe_text_get"], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.pipe_text_get(session_id, pipe_name).await?,
-      None => String::new(),
-    };
-    Ok(PipeText { value })
-  })
+  cached(
+    state,
+    &["pipe_text_get"],
+    move |client| async move {
+      let value = client.pipe_text_get(session_id, pipe_name).await?;
+      Ok(PipeText { value })
+    },
+    || PipeText { value: String::new() },
+  )
   .await
 }
 
 async fn types_get(state: &AppState, session_id: &str) -> Result<Types, Error> {
-  cached(state, &["types_get"], || async {
-    let body = match &state.as2mca {
-      Some(c) => c.types_get(session_id).await?,
-      None => vec![],
-    };
-    Ok(Types { body })
-  })
+  cached(
+    state,
+    &["types_get"],
+    move |client| async move {
+      let body = client.types_get(session_id).await?;
+      Ok(Types { body })
+    },
+    || Types { body: vec![] },
+  )
   .await
 }
 
 async fn guides_get(state: &AppState, session_id: &str) -> Result<Guides, Error> {
-  cached(state, &["guides_get"], || async {
-    let body = match &state.as2mca {
-      Some(c) => c.guides_get(session_id).await?,
-      None => vec![],
-    };
-    Ok(Guides { body })
-  })
+  cached(
+    state,
+    &["guides_get"],
+    move |client| async move {
+      let body = client.guides_get(session_id).await?;
+      Ok(Guides { body })
+    },
+    || Guides { body: vec![] },
+  )
   .await
 }
 
 async fn guides_groups_get(state: &AppState, session_id: &str) -> Result<GuidesGroups, Error> {
-  cached(state, &["guides_groups_get"], || async {
-    let body = match &state.as2mca {
-      Some(c) => c.guides_groups_get(session_id).await?,
-      None => vec![],
-    };
-    Ok(GuidesGroups { body })
-  })
+  cached(
+    state,
+    &["guides_groups_get"],
+    move |client| async move {
+      let body = client.guides_groups_get(session_id).await?;
+      Ok(GuidesGroups { body })
+    },
+    || GuidesGroups { body: vec![] },
+  )
   .await
 }
 
 async fn classes_get(state: &AppState, session_id: &str, classes: &[&str]) -> Result<Classes, Error> {
-  let tags = [&["classes_get"], classes].concat();
-  cached(state, &tags, || async {
-    let body = match &state.as2mca {
-      Some(c) => c.classes_get(session_id, classes).await?,
-      None => vec![],
-    };
-    Ok(Classes { body })
-  })
+  let base_tags: &[&str] = &["classes_get"];
+  let tags = [base_tags, classes].concat();
+
+  cached(
+    state,
+    &tags,
+    move |client| async move {
+      let body = client.classes_get(session_id, classes).await?;
+      Ok(Classes { body })
+    },
+    || Classes { body: vec![] },
+  )
   .await
 }
 
 async fn class_get(state: &AppState, session_id: &str, class_id: &str) -> Result<Option<Class>, Error> {
-  cached(state, &["class_get", class_id], || async {
-    let class = match &state.as2mca {
-      Some(c) => c.class_get(session_id, class_id).await?,
-      None => None,
-    };
-    Ok(class)
-  })
+  cached(
+    state,
+    &["class_get", class_id],
+    move |client| async move { client.class_get(session_id, class_id).await },
+    || None::<Class>,
+  )
   .await
 }
 
@@ -861,79 +920,95 @@ async fn class_need_collection_id_check(
   session_id: &str,
   class_id: &str,
 ) -> Result<CheckResult, Error> {
-  cached(state, &["class_need_collection_id_check", class_id], || async {
-    let value = match &state.as2mca {
-      Some(c) => c.class_need_collection_id_check(session_id, class_id).await?,
-      None => String::new(),
-    };
-    Ok(CheckResult { value })
-  })
+  cached(
+    state,
+    &["class_need_collection_id_check", class_id],
+    move |client| async move {
+      let value = client.class_need_collection_id_check(session_id, class_id).await?;
+      Ok(CheckResult { value })
+    },
+    || CheckResult { value: String::new() },
+  )
   .await
 }
 
 async fn class_children_get(state: &AppState, session_id: &str, class_id: &str) -> Result<ChildClasses, Error> {
-  cached(state, &["class_children_get", class_id], || async {
-    let child_classes = match &state.as2mca {
-      Some(c) => c.class_children_get(session_id, class_id).await?,
-      None => vec![],
-    };
-    Ok(ChildClasses { child_classes })
-  })
+  cached(
+    state,
+    &["class_children_get", class_id],
+    move |client| async move {
+      let child_classes = client.class_children_get(session_id, class_id).await?;
+      Ok(ChildClasses { child_classes })
+    },
+    || ChildClasses { child_classes: vec![] },
+  )
   .await
 }
 
 async fn class_states_get(state: &AppState, session_id: &str, class_id: &str) -> Result<States, Error> {
-  cached(state, &["class_states_get", class_id], || async {
-    let states = match &state.as2mca {
-      Some(c) => c.class_states_get(session_id, class_id).await?,
-      None => vec![],
-    };
-    Ok(States { states })
-  })
+  cached(
+    state,
+    &["class_states_get", class_id],
+    move |client| async move {
+      let states = client.class_states_get(session_id, class_id).await?;
+      Ok(States { states })
+    },
+    || States { states: vec![] },
+  )
   .await
 }
 
 async fn class_transitions_get(state: &AppState, session_id: &str, class_id: &str) -> Result<Transitions, Error> {
-  cached(state, &["class_transitions_get", class_id], || async {
-    let transitions = match &state.as2mca {
-      Some(c) => c.class_transitions_get(session_id, class_id).await?,
-      None => vec![],
-    };
-    Ok(Transitions { transitions })
-  })
+  cached(
+    state,
+    &["class_transitions_get", class_id],
+    move |client| async move {
+      let transitions = client.class_transitions_get(session_id, class_id).await?;
+      Ok(Transitions { transitions })
+    },
+    || Transitions { transitions: vec![] },
+  )
   .await
 }
 
 async fn class_methods_get(state: &AppState, session_id: &str, class_id: &str) -> Result<Methods, Error> {
-  cached(state, &["class_methods_get", class_id], || async {
-    let body = match &state.as2mca {
-      Some(c) => c.class_methods_get(session_id, class_id).await?,
-      None => vec![],
-    };
-    Ok(Methods { body })
-  })
+  cached(
+    state,
+    &["class_methods_get", class_id],
+    move |client| async move {
+      let body = client.class_methods_get(session_id, class_id).await?;
+      Ok(Methods { body })
+    },
+    || Methods { body: vec![] },
+  )
   .await
 }
 
 async fn class_views_get(state: &AppState, session_id: &str, class_id: &str) -> Result<Views, Error> {
-  cached(state, &["class_views_get", class_id], || async {
-    let body = match &state.as2mca {
-      Some(c) => c.class_views_get(session_id, class_id).await?,
-      None => vec![],
-    };
-    Ok(Views { body })
-  })
+  cached(
+    state,
+    &["class_views_get", class_id],
+    move |client| async move {
+      let body = client.class_views_get(session_id, class_id).await?;
+      Ok(Views { body })
+    },
+    || Views { body: vec![] },
+  )
   .await
 }
 
 async fn view_columns_get(state: &AppState, session_id: &str, view_id: i64) -> Result<Columns, Error> {
-  cached(state, &["view_columns_get", &view_id.to_string()], || async {
-    let body = match &state.as2mca {
-      Some(c) => c.view_columns_get(session_id, view_id).await?,
-      None => vec![],
-    };
-    Ok(Columns { body })
-  })
+  let view_id_tag = view_id.to_string();
+
+  cached(
+    state,
+    &["view_columns_get", &view_id_tag],
+    move |client| async move {
+      let body = client.view_columns_get(session_id, view_id).await?;
+      Ok(Columns { body })
+    },
+    || Columns { body: vec![] },
+  )
   .await
 }
 
@@ -947,19 +1022,24 @@ async fn view_data_get_cancelable(
     req.hint.to_owned(),
     req.allow_timestamp_milliseconds.to_string(),
   ];
+
   if let Some(rows_limit) = req.rows_limit {
     strings.push(rows_limit.to_string());
   }
+
   if let Some(f) = req.additional_filter_bind {
     strings.push(f.clause.to_owned());
   }
+
   if let Some(f) = req.object_filter {
     strings.push(f.object_id.to_string());
   }
+
   if let Some(f) = &req.user_filter {
     if let Some(f) = f.extra_filter {
       strings.push(f.to_owned());
     }
+
     let all_values: Vec<String> = f.filters.iter().flat_map(Filter::extract_all_strings).collect();
     strings.extend_from_slice(&all_values);
   }
@@ -968,13 +1048,15 @@ async fn view_data_get_cancelable(
   let base_tags: Vec<&str> = vec!["view_data_get_cancelable"];
   let tags = [base_tags, objects_tags].concat();
 
-  cached(state, &tags, || async {
-    let row = match &state.as2mca {
-      Some(c) => c.view_data_get_cancelable(req).await?,
-      None => vec![],
-    };
-    Ok(ViewData { row })
-  })
+  cached(
+    state,
+    &tags,
+    move |client| async move {
+      let row = client.view_data_get_cancelable(req).await?;
+      Ok(ViewData { row })
+    },
+    || ViewData { row: vec![] },
+  )
   .await
 }
 
@@ -984,25 +1066,19 @@ async fn object_class_and_archive_key_get(
   object_id: i64,
   base_class_id: &str,
 ) -> Result<ObjectClassAndArchiveKey, Error> {
+  let object_id_tag = object_id.to_string();
+
   cached(
     state,
-    &[
-      "object_class_and_archive_key_get",
-      &object_id.to_string(),
-      base_class_id,
-    ],
-    || async {
-      let obj = match &state.as2mca {
-        Some(c) => {
-          c.object_class_and_archive_key_get(session_id, object_id, base_class_id)
-            .await?
-        }
-        None => ObjectClassAndArchiveKey {
-          class_id: None,
-          archive_key: None,
-        },
-      };
-      Ok(obj)
+    &["object_class_and_archive_key_get", &object_id_tag, base_class_id],
+    move |client| async move {
+      client
+        .object_class_and_archive_key_get(session_id, object_id, base_class_id)
+        .await
+    },
+    || ObjectClassAndArchiveKey {
+      class_id: None,
+      archive_key: None,
     },
   )
   .await
@@ -1014,19 +1090,18 @@ async fn object_backward_references_get(
   object_id: i64,
   class_id: &str,
 ) -> Result<BackwardReferences, Error> {
+  let object_id_tag = object_id.to_string();
+
   cached(
     state,
-    &["object_backward_references_get", &object_id.to_string(), class_id],
-    || async {
-      let body = match &state.as2mca {
-        Some(c) => {
-          c.object_backward_references_get(session_id, object_id, class_id)
-            .await?
-        }
-        None => vec![],
-      };
+    &["object_backward_references_get", &object_id_tag, class_id],
+    move |client| async move {
+      let body = client
+        .object_backward_references_get(session_id, object_id, class_id)
+        .await?;
       Ok(BackwardReferences { body })
     },
+    || BackwardReferences { body: vec![] },
   )
   .await
 }
@@ -1041,90 +1116,116 @@ async fn objects_lock(
   let base_tags: Vec<&str> = vec!["objects_lock"];
   let tags = [base_tags, objects_tags].concat();
 
-  cached(state, &tags, || async {
-    let message = match &state.as2mca {
-      Some(c) => c.objects_lock(session_id, objects).await?,
-      None => None,
-    };
-    Ok(LockResult { message })
-  })
+  cached(
+    state,
+    &tags,
+    move |client| async move {
+      let message = client.objects_lock(session_id, objects).await?;
+      Ok(LockResult { message })
+    },
+    || LockResult { message: None },
+  )
   .await
 }
 
 async fn objects_unlock(state: &AppState, session_id: &str, clear_all_locks: Option<bool>) -> Result<Done, Error> {
-  if let Some(ref client) = state.as2mca {
+  if let Some(client) = &state.as2mca {
     client.objects_unlock(session_id, clear_all_locks).await?;
   }
   Ok(Done {})
 }
 
 async fn method_parameters_get(state: &AppState, session_id: &str, method_id: i64) -> Result<MethodParameters, Error> {
-  cached(state, &["method_parameters_get", &method_id.to_string()], || async {
-    let parameters = match &state.as2mca {
-      Some(c) => c.method_parameters_get(session_id, method_id).await?,
-      None => vec![],
-    };
-    Ok(MethodParameters { parameters })
-  })
+  let method_id_tag = method_id.to_string();
+
+  cached(
+    state,
+    &["method_parameters_get", &method_id_tag],
+    move |client| async move {
+      let parameters = client.method_parameters_get(session_id, method_id).await?;
+      Ok(MethodParameters { parameters })
+    },
+    || MethodParameters { parameters: vec![] },
+  )
   .await
 }
 
 async fn method_variables_get(state: &AppState, session_id: &str, method_id: i64) -> Result<MethodVariables, Error> {
-  cached(state, &["method_variables_get", &method_id.to_string()], || async {
-    let variables = match &state.as2mca {
-      Some(c) => c.method_variables_get(session_id, method_id).await?,
-      None => vec![],
-    };
-    Ok(MethodVariables { variables })
-  })
+  let method_id_tag = method_id.to_string();
+
+  cached(
+    state,
+    &["method_variables_get", &method_id_tag],
+    move |client| async move {
+      let variables = client.method_variables_get(session_id, method_id).await?;
+      Ok(MethodVariables { variables })
+    },
+    || MethodVariables { variables: vec![] },
+  )
   .await
 }
 
 async fn method_controls_get(state: &AppState, session_id: &str, method_id: i64) -> Result<Controls, Error> {
-  cached(state, &["method_controls_get", &method_id.to_string()], || async {
-    let controls = match &state.as2mca {
-      Some(c) => c.method_controls_get(session_id, method_id).await?,
-      None => vec![],
-    };
-    Ok(Controls { controls })
-  })
+  let method_id_tag = method_id.to_string();
+
+  cached(
+    state,
+    &["method_controls_get", &method_id_tag],
+    move |client| async move {
+      let controls = client.method_controls_get(session_id, method_id).await?;
+      Ok(Controls { controls })
+    },
+    || Controls { controls: vec![] },
+  )
   .await
 }
 
 async fn method_client_script_get(state: &AppState, session_id: &str, method_id: i64) -> Result<ClientScript, Error> {
-  cached(state, &["method_client_script_get", &method_id.to_string()], || async {
-    let text = match &state.as2mca {
-      Some(c) => c.method_client_script_get(session_id, method_id).await?,
-      None => None,
-    };
-    Ok(ClientScript {
-      text: text.unwrap_or_default(),
-    })
-  })
+  let method_id_tag = method_id.to_string();
+
+  cached(
+    state,
+    &["method_client_script_get", &method_id_tag],
+    move |client| async move {
+      let text = client.method_client_script_get(session_id, method_id).await?;
+      Ok(ClientScript {
+        text: text.unwrap_or_default(),
+      })
+    },
+    || ClientScript { text: String::new() },
+  )
   .await
 }
 
 async fn method_begin(state: &AppState, session_id: &str, method_id: i64) -> Result<MethodFrame, Error> {
-  cached(state, &["method_begin", &method_id.to_string()], || async {
-    let frame_id = match &state.as2mca {
-      Some(c) => c.method_begin(session_id, method_id).await?,
-      None => 0,
-    };
-    Ok(MethodFrame {
-      frame_id: Some(frame_id),
-    })
-  })
+  let method_id_tag = method_id.to_string();
+
+  cached(
+    state,
+    &["method_begin", &method_id_tag],
+    move |client| async move {
+      let frame_id = client.method_begin(session_id, method_id).await?;
+      Ok(MethodFrame {
+        frame_id: Some(frame_id),
+      })
+    },
+    || MethodFrame { frame_id: Some(0) },
+  )
   .await
 }
 
 async fn method_end(state: &AppState, session_id: &str, frame_id: i64) -> Result<MethodFrame, Error> {
-  cached(state, &["method_end", &frame_id.to_string()], || async {
-    let frame_id = match &state.as2mca {
-      Some(c) => c.method_end(session_id, frame_id).await?,
-      None => None,
-    };
-    Ok(MethodFrame { frame_id })
-  })
+  let frame_id_tag = frame_id.to_string();
+
+  cached(
+    state,
+    &["method_end", &frame_id_tag],
+    move |client| async move {
+      let frame_id = client.method_end(session_id, frame_id).await?;
+      Ok(MethodFrame { frame_id })
+    },
+    || MethodFrame { frame_id: None },
+  )
   .await
 }
 
@@ -1137,17 +1238,16 @@ async fn method_validate_default(
   let base_tags: Vec<&str> = vec!["method_validate_default"];
   let tags = [base_tags, objects_tags].concat();
 
-  cached(state, &tags, || async {
-    let res = match &state.as2mca {
-      Some(c) => c.method_validate_default(req).await?,
-      None => Validate {
-        object_id: None,
-        debug_text: None,
-        controls_states: None,
-      },
-    };
-    Ok(res)
-  })
+  cached(
+    state,
+    &tags,
+    move |client| async move { client.method_validate_default(req).await },
+    || Validate {
+      object_id: None,
+      debug_text: None,
+      controls_states: None,
+    },
+  )
   .await
 }
 
@@ -1157,17 +1257,16 @@ async fn method_validate(state: &AppState, req: &as2mca_api::requests::MethodVal
   let base_tags: Vec<&str> = vec!["method_validate"];
   let tags = [base_tags, objects_tags].concat();
 
-  cached(state, &tags, || async {
-    let res = match &state.as2mca {
-      Some(c) => c.method_validate(req).await?,
-      None => Validate {
-        object_id: None,
-        debug_text: None,
-        controls_states: None,
-      },
-    };
-    Ok(res)
-  })
+  cached(
+    state,
+    &tags,
+    |client| async { client.method_validate(req).await },
+    || Validate {
+      object_id: None,
+      debug_text: None,
+      controls_states: None,
+    },
+  )
   .await
 }
 
@@ -1180,33 +1279,35 @@ async fn method_execute(
   let base_tags: Vec<&str> = vec!["method_execute"];
   let tags = [base_tags, objects_tags].concat();
 
-  cached(state, &tags, || async {
-    let res = match &state.as2mca {
-      Some(c) => c.method_execute(req).await?,
-      None => MethodResult {
-        value: None,
-        controls_states: None,
-      },
-    };
-    Ok(res)
-  })
+  cached(
+    state,
+    &tags,
+    |client| async { client.method_execute(req).await },
+    || MethodResult {
+      value: None,
+      controls_states: None,
+    },
+  )
   .await
 }
 
-async fn cached<T, F, Fut>(state: &AppState, tags: &[&str], f: F) -> Result<T, Error>
+async fn cached<'a, T, F, D, Fut>(state: &'a AppState, tags: &[&str], f: F, df: D) -> Result<T, Error>
 where
-  F: FnOnce() -> Fut,
-  Fut: Future<Output = Result<T, Error>>,
+  F: Fn(&'a Client) -> Fut,
+  D: FnOnce() -> T,
+  Fut: Future<Output = as2mca_api::error::Result<T>>,
   T: DeserializeOwned + Serialize + Sync,
 {
-  if let Some(c) = &state.cache
-    && let Some(v) = c.get(tags).await?
-  {
-    return Ok(v);
+  if let Some(client) = &state.as2mca {
+    let res = f(client).await?;
+    if let Some(c) = &state.cache {
+      c.set(tags, &res)?;
+    }
+    return Ok(res);
   }
-  let res = f().await?;
   if let Some(c) = &state.cache {
-    c.set(tags, &res).await?;
+    let data = c.get(tags)?.unwrap_or_else(df);
+    return Ok(data);
   }
-  Ok(res)
+  Ok(df())
 }
