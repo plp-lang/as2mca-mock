@@ -1,6 +1,9 @@
 use std::str::Utf8Error;
 
-use as2mca_api::responses::{ResponseBody, ServerErrorInfo};
+use as2mca_api::{
+  requests::XML_HEADER,
+  responses::{ResponseBody, ServerErrorInfo},
+};
 use axum::{
   body::Body,
   extract::rejection::BytesRejection,
@@ -10,6 +13,8 @@ use axum::{
   },
   response::IntoResponse,
 };
+
+use crate::infrastructure::{cache, proxy};
 
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
@@ -30,10 +35,19 @@ pub enum Error {
   InvalidHeaderValue(#[from] InvalidHeaderValue),
 
   #[error("{0}")]
-  As2mcaError(#[from] as2mca_api::error::Error),
+  ParseError(#[from] url::ParseError),
 
-  #[error("ReDB cache error: {0}")]
-  CacheError(#[from] crate::infrastructure::cache::Error),
+  #[error("Disk Cache error: {0}")]
+  CacheError(#[from] cache::Error),
+
+  #[error("{0}")]
+  Reqwest(#[from] reqwest::Error),
+
+  #[error("{0}")]
+  As2mcaApi(#[from] as2mca_api::error::Error),
+
+  #[error("2 MCA proxy client error: {0}")]
+  ProxyError(#[from] proxy::Error),
 
   #[error("Invalid UTF-8 sequence in the input: {0}")]
   InvalidUtf8(#[from] Utf8Error),
@@ -76,17 +90,33 @@ impl IntoResponse for Error {
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
       }
 
-      Self::As2mcaError(as2mca_api::error::Error::Api { message, details, .. }) => {
+      Self::ProxyError(proxy::Error::As2mcaApi(as2mca_api::error::Error::Api { message, details, .. }))
+      | Self::As2mcaApi(as2mca_api::error::Error::Api { message, details, .. }) => {
         new_error(message, details).into_response()
       }
 
-      Self::As2mcaError(err) => {
+      Self::Reqwest(err) => {
+        tracing::error!("Application Server 2 MCA error: {}", err);
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
+      }
+
+      Self::As2mcaApi(err) => {
+        tracing::error!("Application Server 2 MCA error: {}", err);
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
+      }
+
+      Self::ProxyError(err) => {
         tracing::error!("Application Server 2 MCA error: {}", err);
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
       }
 
       Self::InvalidUtf8(err) => {
         tracing::error!("Invalid UTF-8 error: {}", err);
+        new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
+      }
+
+      Self::ParseError(err) => {
+        tracing::error!("Failed to parse date: {}", err);
         new_error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), err.to_string()).into_response()
       }
 
@@ -125,8 +155,7 @@ pub fn new_error(title: String, description: String) -> Result<impl IntoResponse
     }),
   };
 
-  let body =
-    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>".to_owned() + &quick_xml::se::to_string(&response)?;
+  let body = XML_HEADER.to_owned() + &quick_xml::se::to_string(&response)?;
 
   Ok((StatusCode::OK, headers, body))
 }

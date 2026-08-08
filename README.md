@@ -135,7 +135,7 @@ bun test
 | `AS2MCA_MOCK_URL`                       | Адрес сервера приложений 2 MCA                 | Да (только в режиме `proxy`) |                         |
 | `AS2MCA_MOCK_USERNAME`                  | Имя пользователя для Basic-аутентификации      | Да (только в режиме `proxy`) |                         |
 | `AS2MCA_MOCK_PASSWORD`                  | Пароль для Basic-аутентификации                | Да (только в режиме `proxy`) |                         |
-| `AS2MCA_MOCK_CACHE_PATH`                | Путь хранения данных                           | Нет                          | `.cache/cache.db`       |
+| `AS2MCA_MOCK_CACHE_PATH`                | Путь хранения данных                           | Да (только в режиме `cache`) |                         |
 | `AS2MCA_MOCK_WEB_APP_NAME`              | Имя веб-приложения                             | Нет                          | `platform2mca`          |
 | `AS2MCA_MOCK_HOST`                      | Хост сервера                                   | Нет                          | `0.0.0.0`               |
 | `AS2MCA_MOCK_PORT`                      | Порт сервера                                   | Нет                          | `3000`                  |

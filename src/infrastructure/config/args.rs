@@ -19,7 +19,7 @@ pub struct Args {
   /// - cache: использовать кэш из диска для выдачи результатов на запросы
   /// - proxy: перенаправлять запрос на СП
   /// - cache+proxy: перенаправлять запрос на СП и кешировать ответы на диск
-  #[arg(env = "AS2MCA_MOCK_MODE", default_value = "cache+proxy")]
+  #[arg(long, env = "AS2MCA_MOCK_MODE", default_value = "cache+proxy")]
   pub mode: String,
 
   /// URL сервера приложений
@@ -35,8 +35,8 @@ pub struct Args {
   pub password: Option<Box<str>>,
 
   /// Пароль от пользователя сервера приложений
-  #[arg(long, env = "AS2MCA_MOCK_CACHE_PATH", default_value = ".cache/cache.db")]
-  pub cache_path: Box<str>,
+  #[arg(long, env = "AS2MCA_MOCK_CACHE_PATH")]
+  pub cache_path: Option<Box<str>>,
 
   /// Наименование приложения, префикс для всех HTTP запросов. Повторяет поведение TOMCAT.
   #[arg(short, long, env = "AS2MCA_MOCK_WEB_APP_NAME", default_value = "platform2mca")]
@@ -70,4 +70,36 @@ pub struct Args {
     value_delimiter = ','
   )]
   pub cors_allowed_origins: Vec<String>,
+}
+
+/// # Errors
+pub fn validate_args(args: &Args) -> Result<(bool, bool), String> {
+  let mode = args.mode.as_str();
+  let is_proxy = mode.contains("proxy");
+  let is_cache = mode.contains("cache");
+
+  if is_proxy {
+    if args.url.is_none() {
+      return Err("Proxy mode requires --url (`AS2MCA_MOCK_URL`) to be set".into());
+    }
+    if args.username.is_none() {
+      return Err("Proxy mode requires --username (`AS2MCA_MOCK_USERNAME`) to be set".into());
+    }
+    if args.password.is_none() {
+      return Err("Proxy mode requires --password (`AS2MCA_MOCK_PASSWORD`) to be set".into());
+    }
+  }
+
+  if is_cache {
+    if args.cache_path.is_none() {
+      return Err("Cache mode requires --cache-path (`AS2MCA_MOCK_CACHE_PATH`) to be set".into());
+    }
+    if let Some(path) = &args.cache_path
+      && path.is_empty()
+    {
+      return Err("Cache path cannot be empty".into());
+    }
+  }
+
+  Ok((is_proxy, is_cache))
 }

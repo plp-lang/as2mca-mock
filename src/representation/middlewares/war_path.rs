@@ -22,7 +22,7 @@ impl FromRequestParts<AppState> for WarPath {
       .await
       .map_err(|_| Error::PageNotFound)?;
 
-    if params.war_name != *state.args.web_app_name {
+    if params.war_name != *state.web_app_name {
       return Err(Error::PageNotFound);
     }
 

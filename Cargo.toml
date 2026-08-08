@@ -66,6 +66,7 @@ sha2 = "0.11.0"
 redb = "4.1.0"
 reqwest = "0.13.4"
 bytes = "1.12.1"
+url = "2.5.8"
 
 [build-dependencies]
 shadow-rs = "2.0.0"

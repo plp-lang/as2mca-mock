@@ -26,11 +26,8 @@ use tracing::warn;
 
 use crate::{
   error::Error,
-  infrastructure::{
-    as2mca::reqwest_as2mca_send,
-    config::args::build::{
-      COMMIT_AUTHOR, COMMIT_DATE, COMMIT_HASH, COMMIT_TIMESTAMP, PKG_DESCRIPTION, PKG_VERSION, PROJECT_NAME,
-    },
+  infrastructure::config::args::build::{
+    COMMIT_AUTHOR, COMMIT_DATE, COMMIT_HASH, COMMIT_TIMESTAMP, PKG_DESCRIPTION, PKG_VERSION, PROJECT_NAME,
   },
   representation::{
     app::AppState,
@@ -64,9 +61,19 @@ pub async fn api(
     Ok(req) => req,
     Err(err) => {
       warn!(err = %err, body = %body_str, "XML deserialization error. The server API has changed and is incompatible with the current library version. Please open an issue in the project repository and include the details below.");
-      match &state.client {
-        Some(client) if let Some(url) = &state.url => {
-          let body = reqwest_as2mca_send(url, client, body_str.to_string()).await?;
+      match &state.proxy {
+        Some(client) => {
+          let url = client.base_url.join("/api".trim_start_matches('/'))?;
+
+          let body = client
+            .reqwest
+            .post(url)
+            .body(body)
+            .send()
+            .await?
+            .error_for_status()?
+            .bytes()
+            .await?;
 
           let mut headers = HeaderMap::new();
           headers.insert(CONTENT_TYPE, "text/xml; charset=utf-8".parse()?);
@@ -88,9 +95,9 @@ pub async fn api(
     RequestKind::SessionInit(SessionInit {
       alive_active_session: _,
     }) => {
-      let debug_pipe_name = state.session.map_or_else(
+      let debug_pipe_name = state.proxy.map_or_else(
         || format!("debug${:010}", (0..10_000_000_000).fake::<u64>()),
-        |arc| arc.debug_pipe_name.clone(),
+        |arc| arc.session.debug_pipe_name.clone(),
       );
       ResponseBody::Session(Session {
         session_id,
@@ -653,8 +660,8 @@ async fn system_net_address_set(
   state: &AppState,
   req: &as2mca_api::requests::SystemNetAddressSet<'_>,
 ) -> Result<Done, Error> {
-  if let Some(client) = &state.as2mca {
-    client.system_net_address_set(req).await?;
+  if let Some(client) = &state.proxy {
+    client.as2mca.system_net_address_set(req).await?;
   }
   Ok(Done {})
 }
@@ -663,8 +670,8 @@ async fn network_information_set(
   state: &AppState,
   req: &as2mca_api::requests::NetworkInformationSet<'_>,
 ) -> Result<Done, Error> {
-  if let Some(client) = &state.as2mca {
-    client.network_information_set(req).await?;
+  if let Some(client) = &state.proxy {
+    client.as2mca.network_information_set(req).await?;
   }
   Ok(Done {})
 }
@@ -805,8 +812,8 @@ async fn embedded_interaction_get_resource(
 }
 
 async fn embedded_interaction_post(state: &AppState, session_id: &str, request: &str) -> Result<Done, Error> {
-  if let Some(client) = &state.as2mca {
-    client.embedded_interaction_post(session_id, request).await?;
+  if let Some(client) = &state.proxy {
+    client.as2mca.embedded_interaction_post(session_id, request).await?;
   }
   Ok(Done {})
 }
@@ -1129,8 +1136,8 @@ async fn objects_lock(
 }
 
 async fn objects_unlock(state: &AppState, session_id: &str, clear_all_locks: Option<bool>) -> Result<Done, Error> {
-  if let Some(client) = &state.as2mca {
-    client.objects_unlock(session_id, clear_all_locks).await?;
+  if let Some(client) = &state.proxy {
+    client.as2mca.objects_unlock(session_id, clear_all_locks).await?;
   }
   Ok(Done {})
 }
@@ -1298,8 +1305,8 @@ where
   Fut: Future<Output = as2mca_api::error::Result<T>>,
   T: DeserializeOwned + Serialize + Sync,
 {
-  if let Some(client) = &state.as2mca {
-    let res = f(client).await?;
+  if let Some(client) = &state.proxy {
+    let res = f(&client.as2mca).await?;
     if let Some(c) = &state.cache {
       c.set(tags, &res)?;
     }

@@ -5,8 +5,6 @@ use redb::{Database, ReadableDatabase, TableDefinition};
 use serde::{Serialize, de::DeserializeOwned};
 use sha2::{Digest, Sha256};
 
-const TABLE: TableDefinition<&str, &[u8]> = TableDefinition::new("cache");
-
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum Error {
@@ -35,6 +33,8 @@ pub enum Error {
   XmlSerializeError(#[from] quick_xml::SeError),
 }
 
+const TABLE: TableDefinition<&str, &[u8]> = TableDefinition::new("cache");
+
 #[derive(Debug)]
 pub struct DiskCacheManager {
   db: Database,
@@ -42,14 +42,14 @@ pub struct DiskCacheManager {
 
 impl DiskCacheManager {
   /// # Errors
-  pub fn new(cache_file: impl AsRef<Path>) -> Result<Self, Error> {
-    let cache_file = cache_file.as_ref().to_path_buf();
+  pub fn new(path: impl AsRef<Path>) -> Result<Self, Error> {
+    let path = path.as_ref().to_path_buf();
 
-    if let Some(parent) = cache_file.parent() {
+    if let Some(parent) = path.parent() {
       std::fs::create_dir_all(parent)?;
     }
 
-    let db = Database::create(&cache_file)?;
+    let db = Database::create(&path)?;
 
     let write_txn = db.begin_write()?;
     let _ = write_txn.open_table(TABLE)?;
