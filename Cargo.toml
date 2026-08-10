@@ -43,10 +43,10 @@ strip = true
 panic = "abort"
 
 [dependencies]
-thiserror = "2.0.19"
-base64 = "0.23.0"
+thiserror = "2.0.20"
+base64 = "0.23.1"
 hex = "0.4.3"
-clap = { version = "4.6.4", features = ["derive", "env"] }
+clap = { version = "4.6.6", features = ["derive", "env"] }
 serde = { version = "1.0.229" }
 log = { version = "0.4.33", features = ["serde"] }
 tokio = { version = "1.53.1", features = ["full"] }
@@ -57,11 +57,10 @@ tower-http = { version = "0.7", features = ["trace", "cors"] }
 quick-xml = { version = "0.41.0", features = ["serialize"] }
 fake = { version = "5.1.0", features = ["derive"] }
 axum = "0.8.9"
-cookie = "0.18.1"
+cookie = "0.18.2"
 chrono = { version = "0.4.45", features = ["serde"] }
 shadow-rs = "2.0.0"
-# as2mca-api = "0.2.0"
-as2mca-api = { path = "../as2mca-api-rs" }
+as2mca-api = "0.3.0"
 sha2 = "0.11.0"
 redb = "4.1.0"
 reqwest = "0.13.4"
