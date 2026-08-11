@@ -1,6 +1,9 @@
 # Mock-сервер для СП 2 MCA АБС ЦФТ
 
 <h4 align="center">
+  <a href="https://github.com/plp-lang/as2mca-mock/pkgs/container/as2mca-mock">
+    <img src="https://img.shields.io/github/v/release/plp-lang/as2mca-mock?color=blue&logo=docker&logoColor=white&label=ghcr.io" alt="Container" />
+  </a>
   <a href="https://github.com/plp-lang/as2mca-mock/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" />
   </a>
